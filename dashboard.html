@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Force Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e2e0d8;
+  --text: #1a1916;
+  --text2: #6b6860;
+  --text3: #9e9b92;
+  --accent: #1a472a;
+  --accent-light: #e8f0eb;
+  --red: #c0392b;
+  --red-light: #fdf0ee;
+  --amber: #9a6200;
+  --amber-light: #fef8ec;
+  --blue: #1a3a5c;
+  --blue-light: #eaf1f9;
+  --green: #1a472a;
+  --green-light: #e8f0eb;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* LAYOUT */
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: var(--accent);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+}
+
+.logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.logo-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+.logo-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+
+.nav { padding: 12px 0; flex: 1; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  color: rgba(255,255,255,0.65);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.08); }
+.nav-item.active {
+  color: #fff;
+  background: rgba(255,255,255,0.12);
+  border-left-color: #7fba8a;
+  font-weight: 500;
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8; }
+.nav-item.active svg { opacity: 1; }
+
+.nav-section {
+  padding: 16px 20px 6px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+}
+
+.main {
+  margin-left: 220px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.content { padding: 24px 28px; flex: 1; }
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; }
+
+/* METRICS */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.metric-val { font-size: 28px; font-weight: 600; letter-spacing: -1px; color: var(--text); font-family: 'DM Mono', monospace; }
+.metric-lbl { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.metric.warn .metric-val { color: var(--red); }
+.metric.ok .metric-val { color: var(--green); }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.card-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title { font-size: 13px; font-weight: 600; }
+.card-body { padding: 0; }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+/* BADGES */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.badge-green  { background: var(--green-light);  color: var(--green); }
+.badge-red    { background: var(--red-light);    color: var(--red); }
+.badge-amber  { background: var(--amber-light);  color: var(--amber); }
+.badge-blue   { background: var(--blue-light);   color: var(--blue); }
+.badge-gray   { background: var(--surface2);     color: var(--text2); }
+
+/* BUTTONS */
+.btn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--surface2); }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #155222; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+/* VISIT DETAIL */
+.visit-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.visit-head {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.visit-client { font-weight: 600; font-size: 14px; }
+.visit-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.visit-body { padding: 12px 16px; }
+.detail-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 4px 12px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--surface2);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-key { color: var(--text3); font-weight: 500; }
+.detail-val { color: var(--text); }
+.detail-val.action { color: var(--amber); font-weight: 500; }
+.detail-val.help   { color: var(--red);   font-weight: 500; }
+.detail-val.fu     { color: var(--blue);  font-weight: 500; }
+
+/* STAFF SECTION */
+.staff-group { margin-bottom: 20px; }
+.staff-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; flex-shrink: 0;
+}
+.staff-name { font-weight: 600; font-size: 13px; }
+.staff-count { font-size: 12px; color: var(--text2); }
+
+/* CALENDAR */
+.cal-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.cal-month { font-size: 15px; font-weight: 600; min-width: 140px; }
+.cal-grid-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.cal-days-header { display: grid; grid-template-columns: repeat(7,1fr); background: var(--surface2); border-bottom: 1px solid var(--border); }
+.cal-day-name { text-align: center; padding: 8px; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+.cal-cell {
+  min-height: 72px;
+  padding: 6px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cal-cell:hover { background: var(--surface2); }
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-cell.today { background: var(--accent-light); }
+.cal-cell.empty { cursor: default; background: var(--surface2); opacity: 0.5; }
+.cal-date { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+.cal-cell.today .cal-date { color: var(--accent); font-weight: 700; }
+.cal-dot { font-size: 10px; margin: 1px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-dot.fu     { color: var(--red);   }
+.cal-dot.visit  { color: var(--blue);  }
+.cal-dot.action { color: var(--amber); }
+
+.cal-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 14px;
+}
+.cal-detail-title { font-weight: 600; margin-bottom: 10px; font-size: 13px; }
+
+/* FOLLOW-UP LIST */
+.fu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.fu-item:last-child { border-bottom: none; }
+.fu-client { font-weight: 500; font-size: 13px; }
+.fu-detail { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.fu-date { font-size: 12px; font-weight: 600; color: var(--blue); text-align: right; white-space: nowrap; }
+.fu-date.overdue { color: var(--red); }
+
+/* REPORT */
+.report-text {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  color: var(--text);
+}
+
+/* FILTERS */
+.filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.filters select, .filters input {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* LOADING / EMPTY */
+.loading { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+.empty { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* REFRESH INDICATOR */
+.refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 8px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+}
+.refresh-btn:hover { background: var(--surface2); }
+.refresh-btn svg { width: 14px; height: 14px; }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+@media (max-width: 900px) {
+  .metrics { grid-template-columns: repeat(2,1fr); }
+  .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">Field Force</div>
+      <div class="logo-sub">Manager Dashboard</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="switchTab('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="switchTab('today')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Today's Activity
+      </div>
+      <div class="nav-section">Records</div>
+      <div class="nav-item" onclick="switchTab('visits')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        All Visits
+      </div>
+      <div class="nav-item" onclick="switchTab('followups')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Follow-ups
+      </div>
+      <div class="nav-item" onclick="switchTab('actions')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Action Items
+      </div>
+      <div class="nav-item" onclick="switchTab('staff')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Staff
+      </div>
+      <div class="nav-item" onclick="switchTab('clients')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Clients
+      </div>
+      <div class="nav-section">Reports</div>
+      <div class="nav-item" onclick="switchTab('calendar')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendar
+      </div>
+      <div class="nav-item" onclick="switchTab('eod')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        EOD Report
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      Connected to localhost:5000
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-right">
+        <span id="lastRefresh" style="font-size:11px;color:#9e9b92;"></span>
+        <button class="refresh-btn" onclick="refreshCurrent()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="tab-dashboard" class="section active">
+        <div class="metrics" id="dashMetrics">
+          <div class="loading"><span class="spinner"></span>Loading…</div>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-head"><span class="card-title">Today's visits</span></div>
+              <div class="card-body" id="dashToday"><div class="loading"><span class="spinner"></span></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-head"><span class="card-title">Upcoming follow-ups (7 days)</span></div>
+              <div class="card-body" id="dashFU"><div class="loading"><span class="spinner"></span></div></div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+              <div class="card-head"><span class="card-title">Help needed from management</span></div>
+              <div class="card-body" id="dashHelp"><div class="loading"><span class="spinner"></span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TODAY -->
+      <div id="tab-today" class="section">
+        <div id="todayContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+      </div>
+
+      <!-- ALL VISITS -->
+      <div id="tab-visits" class="section">
+        <div class="filters">
+          <input type="date" id="vFromDate" onchange="loadVisits()">
+          <input type="date" id="vToDate" onchange="loadVisits()">
+          <select id="vStaffFilter" onchange="loadVisits()"><option value="">All staff</option></select>
+          <select id="vTypeFilter" onchange="loadVisits()">
+            <option value="">All types</option>
+            <option>Prospecting</option><option>Sales call</option><option>Follow-up</option>
+            <option>Service visit</option><option>Demo</option><option>Collection</option>
+            <option>Delivery</option><option>Complaint</option>
+          </select>
+          <select id="vPriFilter" onchange="loadVisits()">
+            <option value="">All priorities</option>
+            <option>High</option><option>Medium</option><option>Low</option>
+          </select>
+        </div>
+        <div id="visitsContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+      </div>
+
+      <!-- FOLLOW-UPS -->
+      <div id="tab-followups" class="section">
+        <div class="filters">
+          <select id="fuStatus" onchange="loadFollowUps()">
+            <option value="scheduled">Scheduled</option>
+            <option value="">All</option>
+            <option value="completed">Completed</option>
+          </select>
+          <button class="btn btn-sm" onclick="loadOverdue()" style="background:var(--red-light);color:var(--red);border-color:var(--red);">⚠ Show overdue</button>
+          <button class="btn btn-sm" onclick="loadUpcoming()">Next 7 days</button>
+        </div>
+        <div class="card">
+          <div class="card-body" id="fuContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- ACTION ITEMS -->
+      <div id="tab-actions" class="section">
+        <div class="filters">
+          <select id="aiStatus" onchange="loadActions()">
+            <option value="open">Open</option>
+            <option value="">All</option>
+            <option value="done">Done</option>
+          </select>
+          <button class="btn btn-sm" onclick="document.getElementById('aiStatus').value='';loadActions();document.getElementById('aiHelpOnly').checked=true;loadActions()">Help needed only</button>
+        </div>
+        <div class="card">
+          <div class="card-body" id="actionsContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- STAFF -->
+      <div id="tab-staff" class="section">
+        <div class="card">
+          <div class="card-body" id="staffContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div id="tab-clients" class="section">
+        <div class="filters">
+          <input type="text" id="clientSearch" placeholder="Search client…" oninput="loadClients()" style="min-width:200px;">
+          <select id="clientTier" onchange="loadClients()">
+            <option value="">All tiers</option>
+            <option value="hot">Hot</option><option value="warm">Warm</option>
+            <option value="standard">Standard</option><option value="prospect">Prospect</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="card-body" id="clientsContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div id="tab-calendar" class="section">
+        <div class="cal-nav">
+          <button class="btn btn-sm" onclick="calChangeMonth(-1)">&#8592;</button>
+          <div class="cal-month" id="calMonthTitle"></div>
+          <button class="btn btn-sm" onclick="calChangeMonth(1)">&#8594;</button>
+        </div>
+        <div class="cal-grid-wrap">
+          <div class="cal-days-header">
+            <div class="cal-day-name">Sun</div><div class="cal-day-name">Mon</div>
+            <div class="cal-day-name">Tue</div><div class="cal-day-name">Wed</div>
+            <div class="cal-day-name">Thu</div><div class="cal-day-name">Fri</div>
+            <div class="cal-day-name">Sat</div>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div id="calDetail"></div>
+      </div>
+
+      <!-- EOD REPORT -->
+      <div id="tab-eod" class="section">
+        <div class="filters">
+          <input type="date" id="eodDate">
+          <button class="btn btn-primary" onclick="loadEOD()">Generate report</button>
+          <button class="btn" onclick="copyReport()">Copy text</button>
+        </div>
+        <div id="eodContent"><div class="empty">Select a date and click Generate report</div></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+const API = 'https://remarry-subject-tricycle.ngrok-free.dev/api';
+let currentTab = 'dashboard';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calData = {};
+let staffList = [];
+
+const TODAY = new Date().toISOString().slice(0,10);
+
+// ── NAVIGATION ──────────────────────────────
+const TITLES = {
+  dashboard:'Dashboard', today:"Today's Activity", visits:'All Visits',
+  followups:'Follow-ups', actions:'Action Items', staff:'Staff',
+  clients:'Clients', calendar:'Calendar', eod:'EOD Report'
+};
+
+function switchTab(name) {
+  document.querySelectorAll('.nav-item').forEach((el,i) => {
+    el.classList.toggle('active', el.getAttribute('onclick').includes("'"+name+"'"));
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('pageTitle').textContent = TITLES[name];
+  currentTab = name;
+  loadTab(name);
+}
+
+function loadTab(name) {
+  if (name==='dashboard') loadDashboard();
+  else if (name==='today') loadToday();
+  else if (name==='visits') loadVisits();
+  else if (name==='followups') loadFollowUps();
+  else if (name==='actions') loadActions();
+  else if (name==='staff') loadStaff();
+  else if (name==='clients') loadClients();
+  else if (name==='calendar') loadCalendar();
+  else if (name==='eod') { document.getElementById('eodDate').value = TODAY; }
+  setRefreshTime();
+}
+
+function refreshCurrent() { loadTab(currentTab); }
+function setRefreshTime() {
+  document.getElementById('lastRefresh').textContent =
+    'Updated ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── API FETCH ────────────────────────────────
+async function api(path) {
+  try {
+    const r = await fetch(API + path);
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+// ── HELPERS ──────────────────────────────────
+function priClass(p) {
+  if (p==='High') return 'badge-red';
+  if (p==='Medium') return 'badge-amber';
+  return 'badge-gray';
+}
+function typeClass(t) {
+  if (!t) return 'badge-gray';
+  if (t==='Prospecting') return 'badge-green';
+  if (t==='Follow-up') return 'badge-amber';
+  if (t==='Sales call') return 'badge-blue';
+  return 'badge-gray';
+}
+function badge(txt, cls) { return `<span class="badge ${cls}">${txt}</span>`; }
+function fmtDate(s) {
+  if (!s) return '';
+  return new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+function initials(name) {
+  return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
+// ── DASHBOARD ────────────────────────────────
+async function loadDashboard() {
+  const [summary, today, fu, eod] = await Promise.all([
+    api('/reports/summary?days=7'),
+    api('/visits/today'),
+    api('/follow-ups/upcoming?days=7'),
+    api('/reports/eod')
+  ]);
+
+  if (summary) {
+    document.getElementById('dashMetrics').innerHTML = `
+      <div class="metric ok">
+        <div class="metric-val">${summary.total_visits}</div>
+        <div class="metric-lbl">Visits this week</div>
+        <div class="metric-sub">${summary.active_staff || 0} staff active</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val">${summary.open_follow_ups}</div>
+        <div class="metric-lbl">Open follow-ups</div>
+        <div class="metric-sub">${summary.overdue_follow_ups} overdue</div>
+      </div>
+      <div class="metric ${summary.overdue_follow_ups>0?'warn':''}">
+        <div class="metric-val">${summary.overdue_follow_ups}</div>
+        <div class="metric-lbl">Overdue follow-ups</div>
+        <div class="metric-sub">Need immediate attention</div>
+      </div>
+      <div class="metric ${summary.help_needed>0?'warn':''}">
+        <div class="metric-val">${summary.help_needed}</div>
+        <div class="metric-lbl">Help needed</div>
+        <div class="metric-sub">From management</div>
+      </div>
+    `;
+  }
+
+  // Today's visits compact
+  if (today && today.length) {
+    let html = '';
+    today.forEach(s => {
+      s.visits.forEach(v => {
+        html += `<div class="fu-item">
+          <div>
+            <div class="fu-client">${v.client_name||'—'}</div>
+            <div class="fu-detail">${s.staff_name} · ${v.visit_type} ${v.time_in?'· '+v.time_in:''}</div>
+          </div>
+          <div>${badge(v.priority, priClass(v.priority))}</div>
+        </div>`;
+      });
+    });
+    document.getElementById('dashToday').innerHTML = html || '<div class="empty">No visits today</div>';
+  } else {
+    document.getElementById('dashToday').innerHTML = '<div class="empty">No visits logged today</div>';
+  }
+
+  // Upcoming FU
+  if (fu && fu.length) {
+    let html = fu.slice(0,8).map(f => `
+      <div class="fu-item">
+        <div>
+          <div class="fu-client">${f.client_name}</div>
+          <div class="fu-detail">${f.assigned_to}</div>
+        </div>
+        <div class="fu-date ${f.due_date < TODAY ? 'overdue':''}">${fmtDate(f.due_date)}</div>
+      </div>`).join('');
+    document.getElementById('dashFU').innerHTML = html;
+  } else {
+    document.getElementById('dashFU').innerHTML = '<div class="empty">No upcoming follow-ups</div>';
+  }
+
+  // Help needed
+  if (eod && eod.help_needed && eod.help_needed.length) {
+    let html = eod.help_needed.map(a => `
+      <div class="fu-item">
+        <div>
+          <div class="fu-client">${a.staff_name}</div>
+          <div class="fu-detail" style="color:var(--red)">${a.help_needed}</div>
+        </div>
+        <div>${badge(a.status,'badge-amber')}</div>
+      </div>`).join('');
+    document.getElementById('dashHelp').innerHTML = html;
+  } else {
+    document.getElementById('dashHelp').innerHTML = '<div class="empty">No help requests</div>';
+  }
+}
+
+// ── TODAY ─────────────────────────────────────
+async function loadToday() {
+  const data = await api('/visits/today');
+  const el = document.getElementById('todayContent');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No visits logged today</div>'; return; }
+  let html = '';
+  data.forEach(s => {
+    html += `<div class="staff-group">
+      <div class="staff-header">
+        <div class="avatar">${initials(s.staff_name)}</div>
+        <div>
+          <div class="staff-name">${s.staff_name}</div>
+          <div class="staff-count">${s.visits.length} visit${s.visits.length!==1?'s':''} today</div>
+        </div>
+      </div>`;
+    s.visits.forEach(v => { html += visitCard(v); });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function visitCard(v) {
+  const timeStr = v.time_in ? (v.time_in + (v.time_out?' – '+v.time_out:'')) : '';
+  return `<div class="visit-card">
+    <div class="visit-head">
+      <div>
+        <div class="visit-client">${v.client_name||'—'}</div>
+        <div class="visit-meta">${v.rep_met||''} ${v.rep_met&&v.location?' · ':''} ${v.location||''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${timeStr}</div>
+        ${badge(v.visit_type, typeClass(v.visit_type))} ${badge(v.priority, priClass(v.priority))}
+        ${v.source==='voice'?badge('Voice','badge-green'):''}
+      </div>
+    </div>
+    <div class="visit-body">
+      ${v.purpose?`<div class="detail-row"><div class="detail-key">Purpose</div><div class="detail-val">${v.purpose}</div></div>`:''}
+      ${v.prev_visit_summary?`<div class="detail-row"><div class="detail-key">Previous visit</div><div class="detail-val">${v.prev_visit_summary}</div></div>`:''}
+      ${v.action_items&&v.action_items.length?`<div class="detail-row"><div class="detail-key">Action items</div><div class="detail-val action">${v.action_items.map(a=>a.description).join('<br>')}</div></div>`:''}
+      ${v.notes?`<div class="detail-row"><div class="detail-key">Notes</div><div class="detail-val">${v.notes}</div></div>`:''}
+      ${v.follow_ups&&v.follow_ups.length?`<div class="detail-row"><div class="detail-key">Follow-up</div><div class="detail-val fu">${v.follow_ups.map(f=>fmtDate(f.due_date)).join(', ')}</div></div>`:''}
+    </div>
+  </div>`;
+}
+
+// ── ALL VISITS ────────────────────────────────
+async function loadVisits() {
+  const from  = document.getElementById('vFromDate').value;
+  const to    = document.getElementById('vToDate').value;
+  const staff = document.getElementById('vStaffFilter').value;
+  const type  = document.getElementById('vTypeFilter').value;
+  const pri   = document.getElementById('vPriFilter').value;
+
+  let qs = [];
+  if (from)  qs.push('from='+from);
+  if (to)    qs.push('to='+to);
+  if (staff) qs.push('staff_id='+staff);
+  if (type)  qs.push('visit_type='+encodeURIComponent(type));
+  if (pri)   qs.push('priority='+pri);
+
+  const data = await api('/visits'+(qs.length?'?'+qs.join('&'):''));
+  const el = document.getElementById('visitsContent');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No visits found</div>'; return; }
+
+  let html = `<div class="card"><div class="card-body">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Staff</th><th>Client</th><th>Rep met</th>
+        <th>Type</th><th>Time in</th><th>Time out</th><th>Priority</th><th>Purpose</th>
+      </tr></thead><tbody>`;
+  data.forEach(v => {
+    html += `<tr>
+      <td style="white-space:nowrap">${fmtDate(v.visit_date)}</td>
+      <td>${v.staff_name||'—'}</td>
+      <td><strong>${v.client_name||'—'}</strong></td>
+      <td>${v.rep_met||'—'}</td>
+      <td>${badge(v.visit_type, typeClass(v.visit_type))}</td>
+      <td>${v.time_in||'—'}</td>
+      <td>${v.time_out||'—'}</td>
+      <td>${badge(v.priority, priClass(v.priority))}</td>
+      <td style="max-width:220px;color:var(--text2)">${(v.purpose||'').slice(0,80)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div></div>';
+  el.innerHTML = html;
+}
+
+// ── FOLLOW-UPS ────────────────────────────────
+async function loadFollowUps() {
+  const status = document.getElementById('fuStatus').value;
+  const data = await api('/follow-ups'+(status?'?status='+status:''));
+  renderFU(data);
+}
+async function loadOverdue() { renderFU(await api('/follow-ups?overdue=true')); }
+async function loadUpcoming() { renderFU(await api('/follow-ups/upcoming?days=7')); }
+
+function renderFU(data) {
+  const el = document.getElementById('fuContent');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No follow-ups found</div>'; return; }
+  let html = data.map(f => `
+    <div class="fu-item">
+      <div>
+        <div class="fu-client">${f.client_name}</div>
+        <div class="fu-detail">${f.assigned_to} · ${badge(f.status,'badge-gray')}</div>
+        ${f.notes?`<div class="fu-detail" style="margin-top:3px;">${f.notes}</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <div class="fu-date ${f.due_date<TODAY&&f.status==='scheduled'?'overdue':''}">${fmtDate(f.due_date)}</div>
+      </div>
+    </div>`).join('');
+  el.innerHTML = html;
+}
+
+// ── ACTION ITEMS ──────────────────────────────
+async function loadActions() {
+  const status = document.getElementById('aiStatus').value;
+  const data = await api('/action-items'+(status?'?status='+status:''));
+  const el = document.getElementById('actionsContent');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No action items found</div>'; return; }
+
+  let html = `<table><thead><tr>
+    <th>Staff</th><th>Description</th><th>Help needed</th><th>Due date</th><th>Status</th>
+  </tr></thead><tbody>`;
+  data.forEach(a => {
+    html += `<tr>
+      <td>${a.staff_name||'—'}</td>
+      <td>${a.description}</td>
+      <td style="color:var(--red)">${a.help_needed||'—'}</td>
+      <td style="white-space:nowrap">${fmtDate(a.due_date)}</td>
+      <td>${badge(a.status, a.status==='done'?'badge-green':a.status==='open'?'badge-amber':'badge-gray')}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ── STAFF ─────────────────────────────────────
+async function loadStaff() {
+  const data = await api('/staff');
+  const el = document.getElementById('staffContent');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No staff found</div>'; return; }
+  staffList = data;
+
+  // Populate staff filter in visits tab
+  const sel = document.getElementById('vStaffFilter');
+  sel.innerHTML = '<option value="">All staff</option>' +
+    data.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+
+  let html = `<table><thead><tr>
+    <th>Name</th><th>Role</th><th>Region</th><th>Phone</th><th>Email</th><th>Status</th>
+  </tr></thead><tbody>`;
+  data.forEach(s => {
+    html += `<tr>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div class="avatar" style="width:28px;height:28px;font-size:11px;">${initials(s.name)}</div>
+        <strong>${s.name}</strong>
+      </div></td>
+      <td>${badge(s.role, s.role==='manager'?'badge-blue':'badge-gray')}</td>
+      <td>${s.region||'—'}</td>
+      <td>${s.phone}</td>
+      <td>${s.email||'—'}</td>
+      <td>${badge(s.active?'Active':'Inactive', s.active?'badge-green':'badge-red')}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ── CLIENTS ───────────────────────────────────
+async function loadClients() {
+  const q    = document.getElementById('clientSearch').value;
+  const tier = document.getElementById('clientTier').value;
+  let qs = [];
+  if (q) qs.push('q='+encodeURIComponent(q));
+  if (tier) qs.push('tier='+tier);
+  const data = await api('/clients'+(qs.length?'?'+qs.join('&'):''));
+  const el = document.getElementById('clientsContent');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No clients found</div>'; return; }
+
+  let html = `<table><thead><tr>
+    <th>Company</th><th>City</th><th>Contact</th><th>Phone</th><th>Tier</th>
+  </tr></thead><tbody>`;
+  data.forEach(c => {
+    const tierClass = {hot:'badge-red',warm:'badge-amber',standard:'badge-blue',prospect:'badge-green'}[c.account_tier]||'badge-gray';
+    html += `<tr>
+      <td><strong>${c.company_name}</strong></td>
+      <td>${c.city||'—'}</td>
+      <td>${c.contact_name||'—'}</td>
+      <td>${c.contact_phone||'—'}</td>
+      <td>${badge(c.account_tier||'standard', tierClass)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ── CALENDAR ──────────────────────────────────
+async function loadCalendar() {
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  document.getElementById('calMonthTitle').textContent = months[calMonth]+' '+calYear;
+
+  const [fuData, visitData] = await Promise.all([
+    api(`/follow-ups/calendar?year=${calYear}&month=${calMonth+1}`),
+    api(`/visits?from=${calYear}-${String(calMonth+1).padStart(2,'0')}-01&to=${calYear}-${String(calMonth+1).padStart(2,'0')}-31`)
+  ]);
+
+  calData = { fu: fuData||{}, visits: visitData||[] };
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const days  = new Date(calYear, calMonth+1, 0).getDate();
+  const todayD = new Date();
+
+  for (let i=0; i<first; i++) {
+    const c = document.createElement('div');
+    c.className = 'cal-cell empty';
+    grid.appendChild(c);
+  }
+
+  for (let d=1; d<=days; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = todayD.getFullYear()===calYear && todayD.getMonth()===calMonth && todayD.getDate()===d;
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (isToday?' today':'');
+
+    const fuOnDay = calData.fu[dateStr]||[];
+    const visitsOnDay = calData.visits.filter(v=>v.visit_date===dateStr);
+
+    let html = `<div class="cal-date">${d}</div>`;
+    visitsOnDay.slice(0,2).forEach(v => {
+      html += `<div class="cal-dot visit">● ${(v.client_name||'').slice(0,12)}</div>`;
+    });
+    fuOnDay.slice(0,2).forEach(f => {
+      html += `<div class="cal-dot fu">↻ ${(f.client_name||'').slice(0,12)}</div>`;
+    });
+
+    cell.innerHTML = html;
+    cell.onclick = () => showCalDay(dateStr, visitsOnDay, fuOnDay);
+    grid.appendChild(cell);
+  }
+}
+
+function calChangeMonth(d) {
+  calMonth += d;
+  if (calMonth > 11) { calMonth=0; calYear++; }
+  if (calMonth < 0)  { calMonth=11; calYear--; }
+  loadCalendar();
+  document.getElementById('calDetail').innerHTML = '';
+}
+
+function showCalDay(dateStr, visits, fu) {
+  const el = document.getElementById('calDetail');
+  if (!visits.length && !fu.length) { el.innerHTML=''; return; }
+  let html = `<div class="cal-detail"><div class="cal-detail-title">${fmtDate(dateStr)}</div>`;
+  if (visits.length) {
+    html += `<div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Visits</div>`;
+    visits.forEach(v => {
+      html += `<div class="fu-item">
+        <div>
+          <div class="fu-client">${v.client_name}</div>
+          <div class="fu-detail">${v.staff_name} · ${v.visit_type} ${v.time_in?'· '+v.time_in:''}</div>
+          ${v.purpose?`<div class="fu-detail">${v.purpose.slice(0,80)}</div>`:''}
+        </div>
+        <div>${badge(v.priority, priClass(v.priority))}</div>
+      </div>`;
+    });
+  }
+  if (fu.length) {
+    html += `<div style="font-size:12px;color:var(--text3);font-weight:600;margin:10px 0 6px;text-transform:uppercase;letter-spacing:0.5px;">Follow-ups due</div>`;
+    fu.forEach(f => {
+      html += `<div class="fu-item">
+        <div>
+          <div class="fu-client">${f.client_name}</div>
+          <div class="fu-detail">${f.assigned_to}</div>
+          ${f.notes?`<div class="fu-detail">${f.notes}</div>`:''}
+        </div>
+        <div>${badge(f.status,'badge-amber')}</div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── EOD REPORT ────────────────────────────────
+async function loadEOD() {
+  const date = document.getElementById('eodDate').value || TODAY;
+  const el = document.getElementById('eodContent');
+  el.innerHTML = '<div class="loading"><span class="spinner"></span>Generating report…</div>';
+  const text = await fetch(API+'/reports/eod/text?date='+date).then(r=>r.text()).catch(()=>null);
+  if (!text) { el.innerHTML='<div class="empty">Could not generate report</div>'; return; }
+  el.innerHTML = `<div class="report-text">${escHtml(text)}</div>`;
+}
+
+function copyReport() {
+  const el = document.querySelector('.report-text');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => alert('Report copied to clipboard'));
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── INIT ─────────────────────────────────────
+loadDashboard();
+loadStaff();
+document.getElementById('vFromDate').value = TODAY;
+document.getElementById('vToDate').value   = TODAY;
+document.getElementById('eodDate').value   = TODAY;
+setRefreshTime();
+</script>
+</body>
+</html>

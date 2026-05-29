@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a472a">
+<title>Field Logger — Apex Corporation</title>
+<link rel="manifest" href="manifest.json">
+
+
+<style>
+:root {
+  --green: #1a472a;
+  --green2: #2d6a4f;
+  --green-lt: #e8f0eb;
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --border: #e2e0d8;
+  --text: #1a1916;
+  --text2: #6b6860;
+  --text3: #9e9b92;
+  --red: #c0392b;
+  --red-lt: #fdf0ee;
+  --amber: #9a6200;
+  --amber-lt: #fef8ec;
+  --blue: #1a3a5c;
+  --blue-lt: #eaf1f9;
+  --r: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+/* HEADER */
+.header {
+  background: var(--green);
+  color: #fff;
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title { font-size: 16px; font-weight: 600; }
+.header-sub { font-size: 11px; opacity: 0.7; }
+.sync-badge {
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #7fba8a; }
+.sync-dot.offline { background: #e88; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 4px;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 500;
+  gap: 3px;
+  border: none;
+  background: none;
+  transition: color 0.15s;
+}
+.nav-btn.active { color: var(--green); }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-badge {
+  background: var(--red);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 9px;
+  padding: 1px 5px;
+  margin-left: 3px;
+  vertical-align: top;
+}
+
+/* MAIN SCROLL AREA */
+.main {
+  padding: 16px 16px 80px;
+  min-height: calc(100vh - 56px);
+}
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.card-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-body { padding: 14px; }
+
+/* FORM */
+.field { margin-bottom: 12px; }
+.field-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+.field-label .req { color: var(--red); }
+input[type=text], input[type=date], input[type=time], select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--surface);
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--green);
+}
+textarea { min-height: 72px; resize: vertical; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  margin-top: 4px;
+}
+.btn-primary { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-primary:active { background: var(--green2); }
+.btn-danger { background: var(--red-lt); color: var(--red); border-color: var(--red); }
+.btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* VOICE */
+.voice-wrap {
+  background: var(--green);
+  border-radius: var(--r);
+  padding: 20px 14px;
+  text-align: center;
+  margin-bottom: 14px;
+  color: #fff;
+}
+.mic-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+}
+.mic-btn.recording {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1); box-shadow:0 0 0 0 rgba(231,76,60,0.4)} 50%{transform:scale(1.05); box-shadow:0 0 0 12px rgba(231,76,60,0)} }
+.mic-btn svg { width: 28px; height: 28px; }
+.mic-status { font-size: 13px; opacity: 0.85; margin-top: 10px; }
+.mic-hint { font-size: 11px; opacity: 0.6; margin-top: 5px; }
+.transcript-box {
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  min-height: 48px;
+  margin-top: 10px;
+  text-align: left;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+/* GPS */
+.gps-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--green-lt);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--green);
+  margin-bottom: 12px;
+}
+.gps-bar svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* BADGES */
+.badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+.b-green { background: var(--green-lt); color: var(--green); }
+.b-red   { background: var(--red-lt);   color: var(--red); }
+.b-amber { background: var(--amber-lt); color: var(--amber); }
+.b-blue  { background: var(--blue-lt);  color: var(--blue); }
+.b-gray  { background: var(--bg);       color: var(--text2); }
+
+/* VISIT LIST */
+.visit-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.vi-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+.vi-client { font-weight: 600; font-size: 14px; }
+.vi-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.vi-detail { font-size: 12px; color: var(--text2); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+
+/* FU LIST */
+.fu-item {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.fu-item:last-child { border-bottom: none; }
+.fu-client { font-weight: 500; font-size: 13px; }
+.fu-detail { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.fu-date { font-size: 12px; font-weight: 600; color: var(--blue); white-space: nowrap; }
+.fu-date.overdue { color: var(--red); }
+
+/* OFFLINE QUEUE */
+.queue-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.queue-item:last-child { border-bottom: none; }
+
+/* SPINNER */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+.empty { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1916;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: var(--green); }
+.toast.error   { background: var(--red); }
+
+/* SECTION TITLE */
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+
+/* STAFF PICKER */
+.staff-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.staff-btn {
+  padding: 10px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.staff-btn.selected {
+  border-color: var(--green);
+  background: var(--green-lt);
+  color: var(--green);
+  font-weight: 500;
+}
+.staff-initial {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 auto 4px;
+}
+.staff-btn.selected .staff-initial { background: var(--green); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Field Logger</div>
+    <div class="header-sub">Apex Corporation</div>
+  </div>
+  <div class="sync-badge" id="syncBadge">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncText">Online</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- VOICE LOG -->
+  <div id="tab-voice" class="section active">
+    <div id="staffPickerWrap">
+      <div class="section-title">Who are you?</div>
+      <div class="staff-picker" id="staffPicker"></div>
+    </div>
+
+    <div class="voice-wrap">
+      <button class="mic-btn" id="micBtn" onclick="toggleRec()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <div class="mic-status" id="micStatus">Tap mic · speak your full visit details</div>
+      <div class="mic-hint" id="micHint">Include: client name, location, visit type, rep met, purpose, time in/out, actions, follow-up date</div>
+      <div class="transcript-box" id="transcriptBox" style="display:none;"></div>
+    </div>
+
+    <div id="gpsBar" class="gps-bar" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span id="gpsText">Capturing location…</span>
+    </div>
+
+    <div id="parsedSection" style="display:none;">
+      <div class="card">
+        <div class="card-head">Review parsed fields <span style="font-size:11px;color:var(--text3);font-weight:400;">edit if needed</span></div>
+        <div class="card-body" id="parsedFormBody"></div>
+      </div>
+      <button class="btn btn-primary" onclick="submitEntry('voice')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Save visit
+      </button>
+      <button class="btn" onclick="resetVoice()" style="margin-top:8px;">Clear</button>
+    </div>
+
+    <div id="parseActions" style="display:none;">
+      <button class="btn btn-primary" onclick="parseVoice()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>
+        Parse with AI
+      </button>
+      <button class="btn" onclick="resetVoice()" style="margin-top:8px;">Re-record</button>
+    </div>
+  </div>
+
+  <!-- TEXT LOG -->
+  <div id="tab-text" class="section">
+    <div class="section-title">Log a visit</div>
+
+    <div id="gpsBarText" class="gps-bar" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span id="gpsTextForm">Capturing location…</span>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">Staff name <span class="req">*</span></div>
+          <select id="f-staff"><option value="">Select staff member</option></select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-label">Date</div>
+            <input type="date" id="f-date">
+          </div>
+          <div class="field">
+            <div class="field-label">Priority</div>
+            <select id="f-priority"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Client / company <span class="req">*</span></div>
+          <select id="f-client"><option value="">Select or type below</option></select>
+        </div>
+        <div class="field">
+          <div class="field-label">New client (if not in list)</div>
+          <input type="text" id="f-newclient" placeholder="Company name">
+        </div>
+
+        <div class="field">
+          <div class="field-label">Representative met</div>
+          <input type="text" id="f-rep" placeholder="Name & designation">
+        </div>
+        <div class="field">
+          <div class="field-label">Location / area</div>
+          <input type="text" id="f-location" placeholder="e.g. Bistupur, Jamshedpur">
+        </div>
+        <div class="field">
+          <div class="field-label">Visit type</div>
+          <select id="f-type">
+            <option>Follow-up</option><option>Sales call</option><option>Prospecting</option>
+            <option>Service visit</option><option>Demo</option><option>Collection</option>
+            <option>Delivery</option><option>Complaint</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field"><div class="field-label">Time in</div><input type="time" id="f-tin"></div>
+          <div class="field"><div class="field-label">Time out</div><input type="time" id="f-tout"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Main purpose / issue</div>
+          <textarea id="f-purpose" placeholder="Why did you visit?"></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Previous visit summary</div>
+          <textarea id="f-prev" placeholder="What was discussed / committed last time?"></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Action items from today</div>
+          <textarea id="f-action" placeholder="What needs to be done?"></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Help needed from manager</div>
+          <textarea id="f-help" placeholder="Any approvals, support, or resources needed?"></textarea>
+        </div>
+        <div class="field">
+          <div class="field-label">Next follow-up date</div>
+          <input type="date" id="f-followup">
+        </div>
+        <div class="field">
+          <div class="field-label">Notes</div>
+          <textarea id="f-notes" placeholder="Any other observations"></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="submitEntry('text')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Save visit
+    </button>
+    <button class="btn" onclick="clearTextForm()" style="margin-top:8px;">Clear</button>
+  </div>
+
+  <!-- MY VISITS -->
+  <div id="tab-visits" class="section">
+    <div class="section-title">My visits</div>
+    <div id="myVisits"><div class="loading"><span class="spinner"></span> Loading…</div></div>
+  </div>
+
+  <!-- FOLLOW-UPS -->
+  <div id="tab-fu" class="section">
+    <div class="section-title">My follow-ups</div>
+    <div class="card">
+      <div class="card-head">
+        Due & upcoming
+        <span id="fuOverdueCount" style="color:var(--red);font-size:12px;"></span>
+      </div>
+      <div id="myFU"><div class="loading"><span class="spinner"></span> Loading…</div></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="switchTab('voice')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+    </svg>
+    Voice
+  </button>
+  <button class="nav-btn" onclick="switchTab('text')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+    Text
+  </button>
+  <button class="nav-btn" onclick="switchTab('visits')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+      <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+      <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    </svg>
+    My Visits
+  </button>
+  <button class="nav-btn" onclick="switchTab('fu')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="9 11 12 14 22 4"/>
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg>
+    Follow-ups <span id="fuNavBadge"></span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://remarry-subject-tricycle.ngrok-free.dev/api';
+const SYSTEM_PROMPT = `You parse a spoken field visit log into JSON for Apex Corporation India Pvt Ltd (industrial equipment company in Jamshedpur).
+Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
+Respond ONLY with valid JSON, no markdown. Today: ${new Date().toISOString().slice(0,10)}.`;
+
+let staffList = [], clientList = [];
+let selectedStaffId = '';
+let isRec = false, recog = null, fullTx = '';
+let gpsCoords = null;
+let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
+let currentTab = 'voice';
+
+// ── INIT ─────────────────────────────────────
+window.addEventListener('load', async () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/pwa/sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data.type === 'SYNC_NOW') syncOfflineQueue();
+    });
+  }
+  checkOnline();
+  window.addEventListener('online',  () => { checkOnline(); syncOfflineQueue(); });
+  window.addEventListener('offline', () => checkOnline());
+  captureGPS();
+  await loadStaff();
+  await loadClients();
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  loadMyVisits();
+  loadMyFU();
+});
+
+function checkOnline() {
+  const online = navigator.onLine;
+  document.getElementById('syncDot').className = 'sync-dot' + (online ? '' : ' offline');
+  document.getElementById('syncText').textContent = online ? 'Online' : 'Offline';
+}
+
+// ── GPS ───────────────────────────────────────
+function captureGPS() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const bars = document.querySelectorAll('#gpsBar, #gpsBarText');
+      bars.forEach(b => b.style.display = 'flex');
+      document.getElementById('gpsText').textContent =
+        `Location: ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
+      document.getElementById('gpsTextForm').textContent =
+        `Location captured: ${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
+    },
+    () => {}, { enableHighAccuracy: true }
+  );
+}
+
+// ── STAFF & CLIENTS ───────────────────────────
+async function loadStaff() {
+  const data = await api('/staff');
+  if (!data) return;
+  staffList = data.filter(s => s.role === 'field_staff');
+
+  // Staff picker (voice tab)
+  const picker = document.getElementById('staffPicker');
+  picker.innerHTML = staffList.map(s => `
+    <div class="staff-btn" id="sp-${s.id}" onclick="selectStaff('${s.id}')">
+      <div class="staff-initial">${initials(s.name)}</div>
+      ${s.name.split(' ')[0]}
+    </div>`).join('');
+
+  // Staff dropdown (text tab)
+  const sel = document.getElementById('f-staff');
+  sel.innerHTML = '<option value="">Select staff member</option>' +
+    staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function selectStaff(id) {
+  selectedStaffId = id;
+  document.querySelectorAll('.staff-btn').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById('sp-'+id);
+  if (btn) btn.classList.add('selected');
+  showToast(`Logged in as ${staffList.find(s=>s.id===id)?.name||'staff'}`);
+}
+
+async function loadClients() {
+  const data = await api('/clients');
+  if (!data) return;
+  clientList = data;
+  const sel = document.getElementById('f-client');
+  sel.innerHTML = '<option value="">Select client</option>' +
+    data.map(c => `<option value="${c.id}">${c.company_name}</option>`).join('');
+}
+
+// ── NAVIGATION ────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.nav-btn').forEach((b,i) =>
+    b.classList.toggle('active', ['voice','text','visits','fu'][i]===name));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  currentTab = name;
+  if (name==='visits') loadMyVisits();
+  if (name==='fu') loadMyFU();
+}
+
+// ── VOICE ─────────────────────────────────────
+function toggleRec() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    showToast('Use Chrome on Android for voice input', 'error'); return;
+  }
+  isRec ? stopRec() : startRec();
+}
+
+function startRec() {
+  isRec = true; fullTx = '';
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recog = new SR(); recog.continuous = true; recog.interimResults = true; recog.lang = 'en-IN';
+  const mb = document.getElementById('micBtn');
+  mb.classList.add('recording');
+  mb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+  document.getElementById('micStatus').textContent = 'Recording… tap to stop';
+  document.getElementById('micHint').textContent = '';
+  const tb = document.getElementById('transcriptBox');
+  tb.style.display = 'block'; tb.textContent = '';
+  recog.onresult = e => {
+    let interim = ''; fullTx = '';
+    for (let i=0; i<e.results.length; i++) {
+      if (e.results[i].isFinal) fullTx += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    tb.textContent = fullTx + interim;
+  };
+  recog.onend = () => { if (isRec) recog.start(); };
+  recog.start();
+}
+
+function stopRec() {
+  isRec = false;
+  if (recog) { recog.onend = null; recog.stop(); }
+  const mb = document.getElementById('micBtn');
+  mb.classList.remove('recording');
+  mb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+  const txt = (fullTx || document.getElementById('transcriptBox').textContent).trim();
+  if (txt) {
+    document.getElementById('micStatus').textContent = 'Tap "Parse with AI" to extract fields';
+    document.getElementById('parseActions').style.display = 'block';
+  } else {
+    document.getElementById('micStatus').textContent = 'Nothing captured — try again';
+  }
+}
+
+async function parseVoice() {
+  const txt = (fullTx || document.getElementById('transcriptBox').textContent).trim();
+  if (!txt) return;
+  document.getElementById('micStatus').innerHTML = '<span class="spinner"></span> Parsing…';
+  document.getElementById('parseActions').style.display = 'none';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: txt }]
+      })
+    });
+    const d = await r.json();
+    const raw = d.content?.[0]?.text || '{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    buildParsedForm(parsed);
+    document.getElementById('micStatus').textContent = 'Fields parsed — review below';
+  } catch(e) {
+    buildParsedForm({});
+    document.getElementById('micStatus').textContent = 'Parse error — fill manually';
+  }
+}
+
+function buildParsedForm(data) {
+  const fields = [
+    { id:'vf-staff',   label:'Staff name',       type:'select-staff' },
+    { id:'vf-client',  label:'Client',            type:'select-client' },
+    { id:'vf-location',label:'Location',          type:'text',     key:'location' },
+    { id:'vf-type',    label:'Visit type',        type:'select-type' },
+    { id:'vf-repmet',  label:'Rep met',           type:'text',     key:'repMet' },
+    { id:'vf-tin',     label:'Time in',           type:'time',     key:'timeIn' },
+    { id:'vf-tout',    label:'Time out',          type:'time',     key:'timeOut' },
+    { id:'vf-purpose', label:'Purpose',           type:'textarea', key:'purpose' },
+    { id:'vf-prev',    label:'Previous visit',    type:'textarea', key:'prevVisitSummary' },
+    { id:'vf-action',  label:'Action items',      type:'textarea', key:'actionItems' },
+    { id:'vf-help',    label:'Help needed',       type:'textarea', key:'helpNeeded' },
+    { id:'vf-followup',label:'Follow-up date',    type:'date',     key:'followUpDate' },
+    { id:'vf-priority',label:'Priority',          type:'select-priority' },
+    { id:'vf-notes',   label:'Notes',             type:'textarea', key:'notes' },
+  ];
+
+  let html = '';
+  fields.forEach(f => {
+    const val = data[f.key] && data[f.key] !== 'null' ? data[f.key] : '';
+    html += `<div class="field"><div class="field-label">${f.label}</div>`;
+    if (f.type === 'select-staff') {
+      const sid = selectedStaffId || (data.staff ? staffList.find(s=>s.name.toLowerCase().includes(data.staff.toLowerCase()))?.id : '');
+      html += `<select id="${f.id}"><option value="">Select</option>${staffList.map(s=>`<option value="${s.id}"${s.id===sid?' selected':''}>${s.name}</option>`).join('')}</select>`;
+    } else if (f.type === 'select-client') {
+      const cid = data.client ? clientList.find(c=>c.company_name.toLowerCase().includes(data.client.toLowerCase()))?.id : '';
+      html += `<select id="${f.id}"><option value="">Select</option>${clientList.map(c=>`<option value="${c.id}"${c.id===cid?' selected':''}>${c.company_name}</option>`).join('')}</select>`;
+      html += `</div><div class="field"><div class="field-label">New client (if not in list)</div><input type="text" id="vf-newclient" value="${!cid?val:''}" placeholder="Type name if not found above">`;
+    } else if (f.type === 'select-type') {
+      const types = ['Follow-up','Sales call','Prospecting','Service visit','Demo','Collection','Delivery','Complaint','Other'];
+      html += `<select id="${f.id}">${types.map(t=>`<option${data.visitType===t?' selected':''}>${t}</option>`).join('')}</select>`;
+    } else if (f.type === 'select-priority') {
+      html += `<select id="${f.id}">
+        <option${data.priority==='High'?' selected':''}>High</option>
+        <option${!data.priority||data.priority==='Medium'?' selected':''}>Medium</option>
+        <option${data.priority==='Low'?' selected':''}>Low</option>
+      </select>`;
+    } else if (f.type === 'textarea') {
+      html += `<textarea id="${f.id}">${val}</textarea>`;
+    } else {
+      html += `<input type="${f.type}" id="${f.id}" value="${val}">`;
+    }
+    html += '</div>';
+  });
+
+  document.getElementById('parsedFormBody').innerHTML = html;
+  document.getElementById('parsedSection').style.display = 'block';
+}
+
+function resetVoice() {
+  fullTx = '';
+  document.getElementById('transcriptBox').style.display = 'none';
+  document.getElementById('transcriptBox').textContent = '';
+  document.getElementById('parseActions').style.display = 'none';
+  document.getElementById('parsedSection').style.display = 'none';
+  document.getElementById('micStatus').textContent = 'Tap mic · speak your full visit details';
+  document.getElementById('micHint').textContent = 'Include: client name, location, visit type, rep met, purpose, time in/out, actions, follow-up date';
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micBtn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
+}
+
+// ── SUBMIT ────────────────────────────────────
+async function submitEntry(src) {
+  let payload = {};
+
+  if (src === 'voice') {
+    const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+    const staffId = g('vf-staff') || selectedStaffId;
+    const clientId = g('vf-client');
+    const clientName = g('vf-newclient');
+    if (!staffId) { showToast('Select a staff member', 'error'); return; }
+    if (!clientId && !clientName) { showToast('Select or enter a client', 'error'); return; }
+    payload = {
+      staff_id: staffId,
+      client_id: clientId || undefined,
+      client_name: !clientId ? clientName : undefined,
+      location: g('vf-location'),
+      visit_type: g('vf-type'),
+      rep_met: g('vf-repmet'),
+      time_in: g('vf-tin'),
+      time_out: g('vf-tout'),
+      purpose: g('vf-purpose'),
+      prev_visit_summary: g('vf-prev'),
+      action_items: g('vf-action') ? [g('vf-action')] : [],
+      help_needed: g('vf-help'),
+      follow_up_date: g('vf-followup'),
+      priority: g('vf-priority') || 'Medium',
+      notes: g('vf-notes'),
+      source: 'voice',
+    };
+  } else {
+    const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+    const staffId = g('f-staff');
+    const clientId = g('f-client');
+    const newClient = g('f-newclient');
+    if (!staffId) { showToast('Select a staff member', 'error'); return; }
+    if (!clientId && !newClient) { showToast('Select or enter a client', 'error'); return; }
+    payload = {
+      staff_id: staffId,
+      client_id: clientId || undefined,
+      client_name: !clientId ? newClient : undefined,
+      visit_date: g('f-date'),
+      visit_type: g('f-type'),
+      rep_met: g('f-rep'),
+      location: g('f-location'),
+      time_in: g('f-tin'),
+      time_out: g('f-tout'),
+      purpose: g('f-purpose'),
+      prev_visit_summary: g('f-prev'),
+      action_items: g('f-action') ? [g('f-action')] : [],
+      help_needed: g('f-help'),
+      follow_up_date: g('f-followup'),
+      priority: g('f-priority') || 'Medium',
+      notes: g('f-notes'),
+      source: 'text',
+    };
+  }
+
+  if (gpsCoords) {
+    payload.gps_lat = gpsCoords.lat;
+    payload.gps_lng = gpsCoords.lng;
+  }
+
+  // Clean undefined
+  Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+  // Try to send, queue if offline
+  const success = await postVisit(payload);
+  if (success) {
+    showToast('Visit saved!', 'success');
+    if (src === 'voice') resetVoice();
+    else clearTextForm();
+    loadMyVisits();
+    loadMyFU();
+  }
+}
+
+async function postVisit(payload) {
+  if (!navigator.onLine) {
+    offlineQueue.push({ payload, timestamp: new Date().toISOString() });
+    localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+    showToast(`Saved offline (${offlineQueue.length} queued)`, 'success');
+    return true;
+  }
+  try {
+    const r = await fetch(API+'/visits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) return true;
+    showToast('Save failed — check connection', 'error');
+    return false;
+  } catch(e) {
+    offlineQueue.push({ payload, timestamp: new Date().toISOString() });
+    localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+    showToast('Saved offline — will sync', 'success');
+    return true;
+  }
+}
+
+async function syncOfflineQueue() {
+  if (!navigator.onLine || !offlineQueue.length) return;
+  const toSync = [...offlineQueue];
+  let synced = 0;
+  for (const item of toSync) {
+    try {
+      const r = await fetch(API+'/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item.payload)
+      });
+      if (r.ok) { synced++; offlineQueue.splice(offlineQueue.indexOf(item), 1); }
+    } catch(e) { break; }
+  }
+  localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+  if (synced > 0) showToast(`${synced} offline visit(s) synced`, 'success');
+}
+
+function clearTextForm() {
+  ['f-rep','f-location','f-purpose','f-prev','f-action','f-help','f-notes','f-newclient'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-followup').value = '';
+  document.getElementById('f-staff').selectedIndex = 0;
+  document.getElementById('f-client').selectedIndex = 0;
+}
+
+// ── MY VISITS ─────────────────────────────────
+async function loadMyVisits() {
+  const el = document.getElementById('myVisits');
+  const staffId = selectedStaffId || (staffList[0]?.id);
+  if (!staffId) { el.innerHTML='<div class="empty">Select your name first</div>'; return; }
+  const data = await api('/visits?staff_id='+staffId);
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No visits logged yet</div>'; return; }
+  el.innerHTML = data.slice(0,20).map(v => `
+    <div class="visit-item">
+      <div class="vi-head">
+        <div>
+          <div class="vi-client">${v.client_name||'—'}</div>
+          <div class="vi-meta">${v.visit_type} · ${fmtDate(v.visit_date)} ${v.time_in||''}</div>
+        </div>
+        <div>${badge(v.priority, priClass(v.priority))}</div>
+      </div>
+      ${v.purpose?`<div class="vi-detail">${v.purpose.slice(0,100)}</div>`:''}
+    </div>`).join('');
+}
+
+// ── MY FOLLOW-UPS ─────────────────────────────
+async function loadMyFU() {
+  const el = document.getElementById('myFU');
+  const staffId = selectedStaffId || (staffList[0]?.id);
+  if (!staffId) { el.innerHTML='<div class="empty">Select your name first</div>'; return; }
+  const data = await api('/follow-ups?staff_id='+staffId+'&status=scheduled');
+  if (!data || !data.length) { el.innerHTML='<div class="empty">No follow-ups scheduled</div>'; return; }
+  const today = new Date().toISOString().slice(0,10);
+  const overdue = data.filter(f=>f.due_date<today).length;
+  if (overdue) {
+    document.getElementById('fuOverdueCount').textContent = overdue+' overdue';
+    document.getElementById('fuNavBadge').innerHTML = `<span class="nav-badge">${overdue}</span>`;
+  }
+  el.innerHTML = data.map(f=>`
+    <div class="fu-item">
+      <div>
+        <div class="fu-client">${f.client_name}</div>
+        <div class="fu-detail">${f.notes||''}</div>
+      </div>
+      <div class="fu-date ${f.due_date<today?'overdue':''}">${fmtDate(f.due_date)}</div>
+    </div>`).join('');
+}
+
+// ── HELPERS ───────────────────────────────────
+async function api(path) {
+  try { const r = await fetch(API+path); return await r.json(); }
+  catch(e) { return null; }
+}
+function initials(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function fmtDate(s) {
+  if (!s) return '';
+  return new Date(s+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+}
+function badge(txt, cls) { return `<span class="badge ${cls}">${txt}</span>`; }
+function priClass(p) { return p==='High'?'b-red':p==='Low'?'b-gray':'b-amber'; }
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type?' '+type:'');
+  setTimeout(() => t.className='toast', 2800);
+}
+</script>
+</body>
+</html>

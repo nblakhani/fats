@@ -1,0 +1,13 @@
+{
+  "name": "Field Force Logger",
+  "short_name": "FieldLog",
+  "description": "Log field visits by voice or text",
+  "start_url": "/pwa/index.html",
+  "display": "standalone",
+  "background_color": "#1a472a",
+  "theme_color": "#1a472a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
