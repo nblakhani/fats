@@ -565,7 +565,7 @@ textarea { min-height: 72px; resize: vertical; }
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://remarry-subject-tricycle.ngrok-free.dev/api';
+const API = 'https://fats-production.up.railway.app/api';
 const SYSTEM_PROMPT = `You parse a spoken field visit log into JSON for Apex Corporation India Pvt Ltd (industrial equipment company in Jamshedpur).
 Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
 Respond ONLY with valid JSON, no markdown. Today: ${new Date().toISOString().slice(0,10)}.`;
