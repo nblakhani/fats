@@ -29,7 +29,7 @@ class Visit(db.Model):
 
     gps_lat            = db.Column(db.Numeric(10, 7), nullable=True)
     gps_lng            = db.Column(db.Numeric(10, 7), nullable=True)
-
+    lob                = db.Column(db.String(100), nullable=True)
     source             = db.Column(db.String(20),  nullable=False, default="text")
     # source: voice | text
 
