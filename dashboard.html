@@ -1860,7 +1860,7 @@ Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
         <div style="font-size:12px;font-weight:700;color:var(--blue);">✦ AI Client Intelligence — ${clientName}</div>
         <div style="font-size:10px;color:var(--text3);">Based on ${visits.length} visit${visits.length!==1?'s':''}</div>
       </div>
-      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.split('\n').join('<br>')}</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.split(String.fromCharCode(10)).join('<br>')}</div>
     `;
     btn.textContent = '✦ Refresh Intel';
     btn.disabled = false;
