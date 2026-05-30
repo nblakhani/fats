@@ -35,4 +35,4 @@ config = {
     "development": DevelopmentConfig,
     "production": ProductionConfig,
     "default": DevelopmentConfig,
-}
+}#force rebuild 
