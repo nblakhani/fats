@@ -490,11 +490,11 @@ textarea { min-height: 72px; resize: vertical; }
         </div>
 
         <div class="field">
-          <div class="field-label">Representative met</div>
+          <div class="field-label">Representative met <span class="required-star">*</span></div>
           <input type="text" id="f-rep" placeholder="Name & designation">
         </div>
         <div class="field">
-          <div class="field-label">Location / area</div>
+          <div class="field-label">Location / area <span class="required-star">*</span></div>
           <input type="text" id="f-location" placeholder="e.g. Bistupur, Jamshedpur">
         </div>
         <div class="field">
@@ -522,30 +522,30 @@ textarea { min-height: 72px; resize: vertical; }
         </div>
         <div class="row2">
           <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="time" id="f-tin" onchange="clearFieldError('f-tin')"></div>
-          <div class="field"><div class="field-label">Time out</div><input type="time" id="f-tout"></div>
+          <div class="field"><div class="field-label">Time out <span class="required-star">*</span></div><input type="time" id="f-tout"></div>
         </div>
         <div class="field">
           <div class="field-label">Main purpose / issue <span class="required-star">*</span></div>
           <textarea id="f-purpose" oninput="clearFieldError('f-purpose')" placeholder="Why did you visit?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Previous visit summary</div>
+          <div class="field-label">Previous visit summary <span class="required-star">*</span></div>
           <textarea id="f-prev" placeholder="What was discussed / committed last time?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Action items from today</div>
+          <div class="field-label">Action items from today <span class="required-star">*</span></div>
           <textarea id="f-action" placeholder="What needs to be done?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Help needed from manager</div>
+          <div class="field-label">Help needed from manager <span class="required-star">*</span></div>
           <textarea id="f-help" placeholder="Any approvals, support, or resources needed?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Next follow-up date</div>
+          <div class="field-label">Next follow-up date <span class="required-star">*</span></div>
           <input type="date" id="f-followup">
         </div>
         <div class="field">
-          <div class="field-label">Notes</div>
+          <div class="field-label">Notes / outcome <span class="required-star">*</span></div>
           <textarea id="f-notes" placeholder="Any other observations"></textarea>
         </div>
       </div>
@@ -979,17 +979,24 @@ async function submitEntry(src) {
     const clientId = g('vf-client');
     const clientName = g('vf-newclient');
 
-    // Voice validation
+    // Voice validation — ALL fields required
     const voiceErrors = [];
-    if (!staffId) voiceErrors.push('Staff name is required');
-    if (!clientId && !clientName) voiceErrors.push('Client name is required');
-    if (!g('vf-type')) voiceErrors.push('Visit type is required');
-    if (!g('vf-lob')) voiceErrors.push('Line of Business (LOB) is required');
-    if (!g('vf-purpose')) voiceErrors.push('Purpose / main issue is required');
-    if (!g('vf-tin')) voiceErrors.push('Time in is required');
+    if (!staffId)             voiceErrors.push('Staff name');
+    if (!clientId && !clientName) voiceErrors.push('Client name');
+    if (!g('vf-type'))        voiceErrors.push('Visit type');
+    if (!g('vf-lob'))         voiceErrors.push('Line of Business (LOB)');
+    if (!g('vf-repmet'))      voiceErrors.push('Representative met');
+    if (!g('vf-location'))    voiceErrors.push('Location');
+    if (!g('vf-tin'))         voiceErrors.push('Time in');
+    if (!g('vf-tout'))        voiceErrors.push('Time out');
+    if (!g('vf-purpose'))     voiceErrors.push('Purpose / main issue');
+    if (!g('vf-prev'))        voiceErrors.push('Previous visit summary');
+    if (!g('vf-action'))      voiceErrors.push('Action items');
+    if (!g('vf-followup'))    voiceErrors.push('Next follow-up date');
+    if (!g('vf-notes'))       voiceErrors.push('Notes');
 
     if (voiceErrors.length) {
-      showToast(voiceErrors[0], 'error');
+      showToast('Missing: ' + voiceErrors.slice(0,3).join(', ') + (voiceErrors.length>3?' +more':''), 'error');
       return;
     }
     const vActionText = g('vf-action');

@@ -59,7 +59,7 @@ def update_client(client_id):
     data = request.get_json(force=True)
     for field in ["company_name", "industry", "address", "city",
                   "contact_name", "contact_phone", "contact_email",
-                  "account_tier", "notes", "active"]:
+                  "account_tier", "notes", "active", "rating", "rating_comment"]:
         if field in data:
             setattr(c, field, data[field])
     db.session.commit()

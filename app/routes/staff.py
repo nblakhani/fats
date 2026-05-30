@@ -45,7 +45,7 @@ def update_staff(staff_id):
     """PATCH /api/staff/<id>  — partial update"""
     s = Staff.query.get_or_404(staff_id)
     data = request.get_json(force=True)
-    for field in ["name", "phone", "email", "role", "region", "manager_id", "active"]:
+    for field in ["name", "phone", "email", "role", "region", "manager_id", "active", "lob", "rating", "rating_comment"]:
         if field in data:
             setattr(s, field, data[field])
     db.session.commit()

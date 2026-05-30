@@ -684,16 +684,17 @@ tr:hover td { background: var(--surface2); }
         <div style="background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
           <div style="font-size:15px;font-weight:600;margin-bottom:14px;" id="staffModalTitle">Add Staff</div>
           <input type="hidden" id="sm-id">
+          <div id="sm-error" style="display:none;background:var(--red-light);color:var(--red);padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:10px;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Name *</div><input type="text" id="sm-name" placeholder="Full name" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Phone *</div><input type="text" id="sm-phone" placeholder="Mobile number" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Email</div><input type="text" id="sm-email" placeholder="Email" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Role</div>
-              <select id="sm-role" style="width:100%;font-size:13px;"><option value="field_staff">Field Staff</option><option value="manager">Manager</option><option value="admin">Admin</option></select>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Name <span style="color:var(--red)">*</span></div><input type="text" id="sm-name" placeholder="Full name" style="width:100%;font-size:13px;" required></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Phone <span style="color:var(--red)">*</span></div><input type="text" id="sm-phone" placeholder="Mobile number" style="width:100%;font-size:13px;" required></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Email <span style="color:var(--red)">*</span></div><input type="text" id="sm-email" placeholder="Email" style="width:100%;font-size:13px;" required></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Role <span style="color:var(--red)">*</span></div>
+              <select id="sm-role" style="width:100%;font-size:13px;" required><option value="field_staff">Field Staff</option><option value="manager">Manager</option><option value="admin">Admin</option></select>
             </div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Region</div><input type="text" id="sm-region" placeholder="e.g. Jamshedpur" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Primary LOB</div>
-              <select id="sm-lob" style="width:100%;font-size:13px;">
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Region <span style="color:var(--red)">*</span></div><input type="text" id="sm-region" placeholder="e.g. Jamshedpur" style="width:100%;font-size:13px;" required></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Primary LOB <span style="color:var(--red)">*</span></div>
+              <select id="sm-lob" style="width:100%;font-size:13px;" required>
                 <option value="">Select LOB</option>
                 <option>Compressed Air</option><option>Power Technique</option>
                 <option>Mining Equipment</option><option>Industrial Bearings</option>
@@ -705,9 +706,22 @@ tr:hover td { background: var(--surface2); }
             <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Manager</div>
               <select id="sm-manager" style="width:100%;font-size:13px;"><option value="">None</option></select>
             </div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Active</div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Status <span style="color:var(--red)">*</span></div>
               <select id="sm-active" style="width:100%;font-size:13px;"><option value="true">Active</option><option value="false">Inactive</option></select>
             </div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Performance rating <span style="color:var(--red)">*</span></div>
+              <select id="sm-rating" style="width:100%;font-size:13px;">
+                <option value="">Select rating</option>
+                <option value="5">⭐⭐⭐⭐⭐ Outstanding</option>
+                <option value="4">⭐⭐⭐⭐ Very Good</option>
+                <option value="3">⭐⭐⭐ Good</option>
+                <option value="2">⭐⭐ Needs Improvement</option>
+                <option value="1">⭐ Poor</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Performance notes <span style="color:var(--red)">*</span></div>
+            <textarea id="sm-rating-comment" style="width:100%;font-size:13px;min-height:60px;" placeholder="e.g. Consistently meets targets, strong in Mining LOB, needs improvement in documentation..."></textarea>
           </div>
           <div style="display:flex;gap:8px;margin-top:14px;">
             <button class="btn btn-primary" onclick="saveStaff()" style="flex:1;">Save</button>
@@ -721,21 +735,37 @@ tr:hover td { background: var(--surface2); }
         <div style="background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
           <div style="font-size:15px;font-weight:600;margin-bottom:14px;" id="clientModalTitle">Add Client</div>
           <input type="hidden" id="cm-id">
+          <div id="cm-error" style="display:none;background:var(--red-light);color:var(--red);padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:10px;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div style="grid-column:1/-1;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Company name *</div><input type="text" id="cm-name" placeholder="Company name" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Industry</div><input type="text" id="cm-industry" placeholder="e.g. Steel" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">City</div><input type="text" id="cm-city" placeholder="City" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact name</div><input type="text" id="cm-contact" placeholder="Contact person" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact phone</div><input type="text" id="cm-phone" placeholder="Phone" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact email</div><input type="text" id="cm-email" placeholder="Email" style="width:100%;font-size:13px;"></div>
-            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Account tier</div>
+            <div style="grid-column:1/-1;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Company name <span style="color:var(--red)">*</span></div><input type="text" id="cm-name" placeholder="Company name" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Industry <span style="color:var(--red)">*</span></div><input type="text" id="cm-industry" placeholder="e.g. Steel Manufacturing" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">City <span style="color:var(--red)">*</span></div><input type="text" id="cm-city" placeholder="City / area" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact name <span style="color:var(--red)">*</span></div><input type="text" id="cm-contact" placeholder="Contact person" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact phone <span style="color:var(--red)">*</span></div><input type="text" id="cm-phone" placeholder="Phone" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact email <span style="color:var(--red)">*</span></div><input type="text" id="cm-email" placeholder="Email" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Account tier <span style="color:var(--red)">*</span></div>
               <select id="cm-tier" style="width:100%;font-size:13px;">
-                <option value="hot">Hot</option><option value="warm">Warm</option>
-                <option value="standard" selected>Standard</option><option value="prospect">Prospect</option>
+                <option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option>
+                <option value="standard" selected>📋 Standard</option><option value="prospect">🔍 Prospect</option>
+              </select>
+            </div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Client rating <span style="color:var(--red)">*</span></div>
+              <select id="cm-rating" style="width:100%;font-size:13px;">
+                <option value="">Select rating</option>
+                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                <option value="4">⭐⭐⭐⭐ Very Good</option>
+                <option value="3">⭐⭐⭐ Good</option>
+                <option value="2">⭐⭐ Average</option>
+                <option value="1">⭐ Poor</option>
               </select>
             </div>
           </div>
-          <div style="margin-top:10px;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Notes</div><textarea id="cm-notes" style="width:100%;font-size:13px;min-height:60px;"></textarea></div>
+          <div style="margin-top:10px;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Rating notes <span style="color:var(--red)">*</span></div>
+            <textarea id="cm-rating-comment" style="width:100%;font-size:13px;min-height:60px;" placeholder="e.g. Excellent payment record, repeat orders quarterly, key decision maker is GM Maintenance..."></textarea>
+          </div>
+          <div style="margin-top:10px;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Notes</div>
+            <textarea id="cm-notes" style="width:100%;font-size:13px;min-height:60px;" placeholder="Products supplied, special terms, history..."></textarea>
+          </div>
           <div style="display:flex;gap:8px;margin-top:14px;">
             <button class="btn btn-primary" onclick="saveClient()" style="flex:1;">Save</button>
             <button class="btn" onclick="closeClientModal()">Cancel</button>
@@ -1390,13 +1420,14 @@ async function loadAdminStaff() {
 
   const roleClass = r => r==='manager'?'badge-blue':r==='admin'?'badge-red':'badge-gray';
   el.innerHTML = `<table><thead><tr>
-    <th>Name</th><th>Role</th><th>Region</th><th>LOB</th><th>Phone</th><th>Status</th><th></th>
+    <th>Name</th><th>Role</th><th>Region</th><th>LOB</th><th>Rating</th><th>Phone</th><th>Status</th><th></th>
   </tr></thead><tbody>` +
   data.map(s => `<tr>
     <td><strong>${s.name}</strong></td>
     <td>${badge(s.role, roleClass(s.role))}</td>
     <td>${s.region||'—'}</td>
     <td>${s.lob ? badge(s.lob,'b-purple') : '—'}</td>
+    <td>${s.rating ? '⭐'.repeat(s.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(s.rating_comment||'').slice(0,30)}</span></td>
     <td>${s.phone}</td>
     <td>${badge(s.active?'Active':'Inactive', s.active?'badge-green':'badge-red')}</td>
     <td><button class="btn btn-sm" onclick="editStaff(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button></td>
@@ -1425,6 +1456,9 @@ function editStaff(s) {
   document.getElementById('sm-lob').value = s.lob || '';
   document.getElementById('sm-manager').value = s.manager_id || '';
   document.getElementById('sm-active').value = s.active ? 'true' : 'false';
+  document.getElementById('sm-rating').value = s.rating || '';
+  document.getElementById('sm-rating-comment').value = s.rating_comment || '';
+  document.getElementById('sm-error').style.display = 'none';
   document.getElementById('staffModal').style.display = 'flex';
 }
 
@@ -1434,17 +1468,40 @@ function closeStaffModal() {
 
 async function saveStaff() {
   const id = document.getElementById('sm-id').value;
+  const g = i => document.getElementById(i)?.value.trim() || '';
+
+  // Validate all required fields
+  const required = [
+    ['sm-name',           'Name'],
+    ['sm-phone',          'Phone'],
+    ['sm-email',          'Email'],
+    ['sm-role',           'Role'],
+    ['sm-region',         'Region'],
+    ['sm-lob',            'Line of Business'],
+    ['sm-rating',         'Performance rating'],
+    ['sm-rating-comment', 'Performance notes'],
+  ];
+  const missing = required.filter(([id]) => !g(id)).map(([,label]) => label);
+  const errEl = document.getElementById('sm-error');
+  if (missing.length) {
+    errEl.innerHTML = '⚠ Required: <strong>' + missing.join(', ') + '</strong>';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
   const payload = {
-    name:       document.getElementById('sm-name').value.trim(),
-    phone:      document.getElementById('sm-phone').value.trim(),
-    email:      document.getElementById('sm-email').value.trim() || null,
-    role:       document.getElementById('sm-role').value,
-    region:     document.getElementById('sm-region').value.trim() || null,
-    lob:        document.getElementById('sm-lob').value || null,
-    manager_id: document.getElementById('sm-manager').value || null,
-    active:     document.getElementById('sm-active').value === 'true',
+    name:           g('sm-name'),
+    phone:          g('sm-phone'),
+    email:          g('sm-email'),
+    role:           g('sm-role'),
+    region:         g('sm-region'),
+    lob:            g('sm-lob'),
+    manager_id:     g('sm-manager') || null,
+    active:         document.getElementById('sm-active').value === 'true',
+    rating:         parseInt(g('sm-rating')) || null,
+    rating_comment: g('sm-rating-comment'),
   };
-  if (!payload.name || !payload.phone) { alert('Name and phone are required'); return; }
 
   const url = id ? `${API}/staff/${id}/` : `${API}/staff/`;
   const method = id ? 'PATCH' : 'POST';
@@ -1452,11 +1509,12 @@ async function saveStaff() {
   if (r.ok) {
     closeStaffModal();
     loadAdminStaff();
-    loadStaff(); // refresh staff filter
+    loadStaff();
     showFbToast(id ? 'Staff updated' : 'Staff added');
   } else {
-    const err = await r.json();
-    alert('Error: ' + (err.error || 'Save failed'));
+    const err = await r.json().catch(()=>({}));
+    errEl.innerHTML = '⚠ Error: ' + (err.error || 'Save failed');
+    errEl.style.display = 'block';
   }
 }
 
@@ -1469,7 +1527,7 @@ async function loadAdminClients() {
 
   const tierClass = t => ({hot:'badge-red',warm:'badge-amber',standard:'badge-blue',prospect:'badge-green'}[t]||'badge-gray');
   el.innerHTML = `<table><thead><tr>
-    <th>Company</th><th>Industry</th><th>City</th><th>Contact</th><th>Tier</th><th></th>
+    <th>Company</th><th>Industry</th><th>City</th><th>Contact</th><th>Tier</th><th>Rating</th><th></th>
   </tr></thead><tbody>` +
   data.map(c => `<tr>
     <td><strong>${c.company_name}</strong></td>
@@ -1477,6 +1535,7 @@ async function loadAdminClients() {
     <td>${c.city||'—'}</td>
     <td>${c.contact_name||'—'}<br><span style="font-size:11px;color:var(--text3);">${c.contact_phone||''}</span></td>
     <td>${badge(c.account_tier||'standard', tierClass(c.account_tier))}</td>
+    <td>${c.rating ? '⭐'.repeat(c.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(c.rating_comment||'').slice(0,25)}</span></td>
     <td><button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button></td>
   </tr>`).join('') + '</tbody></table>';
 }
@@ -1499,7 +1558,10 @@ function editClient(c) {
   document.getElementById('cm-phone').value = c.contact_phone || '';
   document.getElementById('cm-email').value = c.contact_email || '';
   document.getElementById('cm-tier').value = c.account_tier || 'standard';
+  document.getElementById('cm-rating').value = c.rating || '';
+  document.getElementById('cm-rating-comment').value = c.rating_comment || '';
   document.getElementById('cm-notes').value = c.notes || '';
+  document.getElementById('cm-error').style.display = 'none';
   document.getElementById('clientModal').style.display = 'flex';
 }
 
@@ -1509,17 +1571,40 @@ function closeClientModal() {
 
 async function saveClient() {
   const id = document.getElementById('cm-id').value;
+  const g = i => document.getElementById(i)?.value.trim() || '';
+
+  const required = [
+    ['cm-name',           'Company name'],
+    ['cm-industry',       'Industry'],
+    ['cm-city',           'City'],
+    ['cm-contact',        'Contact name'],
+    ['cm-phone',          'Contact phone'],
+    ['cm-email',          'Contact email'],
+    ['cm-tier',           'Account tier'],
+    ['cm-rating',         'Client rating'],
+    ['cm-rating-comment', 'Rating notes'],
+  ];
+  const missing = required.filter(([id]) => !g(id)).map(([,label]) => label);
+  const errEl = document.getElementById('cm-error');
+  if (missing.length) {
+    errEl.innerHTML = '⚠ Required: <strong>' + missing.join(', ') + '</strong>';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
   const payload = {
-    company_name:  document.getElementById('cm-name').value.trim(),
-    industry:      document.getElementById('cm-industry').value.trim() || null,
-    city:          document.getElementById('cm-city').value.trim() || null,
-    contact_name:  document.getElementById('cm-contact').value.trim() || null,
-    contact_phone: document.getElementById('cm-phone').value.trim() || null,
-    contact_email: document.getElementById('cm-email').value.trim() || null,
-    account_tier:  document.getElementById('cm-tier').value,
-    notes:         document.getElementById('cm-notes').value.trim() || null,
+    company_name:   g('cm-name'),
+    industry:       g('cm-industry'),
+    city:           g('cm-city'),
+    contact_name:   g('cm-contact'),
+    contact_phone:  g('cm-phone'),
+    contact_email:  g('cm-email'),
+    account_tier:   g('cm-tier'),
+    rating:         parseInt(g('cm-rating')) || null,
+    rating_comment: g('cm-rating-comment'),
+    notes:          g('cm-notes') || null,
   };
-  if (!payload.company_name) { alert('Company name is required'); return; }
 
   const url = id ? `${API}/clients/${id}/` : `${API}/clients/`;
   const method = id ? 'PATCH' : 'POST';
@@ -1529,7 +1614,9 @@ async function saveClient() {
     loadAdminClients();
     showFbToast(id ? 'Client updated' : 'Client added');
   } else {
-    alert('Save failed');
+    const err = await r.json().catch(()=>({}));
+    errEl.innerHTML = '⚠ Error: ' + (err.error || 'Save failed');
+    errEl.style.display = 'block';
   }
 }
 

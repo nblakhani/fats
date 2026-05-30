@@ -16,6 +16,8 @@ class Client(db.Model):
     account_tier  = db.Column(db.String(20),  nullable=True, default="standard")
     # tiers: hot | warm | standard | prospect
     notes         = db.Column(db.Text,        nullable=True)
+    rating        = db.Column(db.Integer,      nullable=True)   # 1-5 star client rating
+    rating_comment = db.Column(db.Text,       nullable=True)   # payment, repeat orders, etc
     active        = db.Column(db.Boolean,     default=True)
     created_at    = db.Column(db.DateTime,    default=datetime.utcnow)
 
@@ -35,6 +37,8 @@ class Client(db.Model):
             "contact_email": self.contact_email,
             "account_tier":  self.account_tier,
             "notes":         self.notes,
+            "rating":         self.rating,
+            "rating_comment": self.rating_comment,
             "active":        self.active,
             "created_at":    self.created_at.isoformat(),
         }
