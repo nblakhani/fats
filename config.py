@@ -1,12 +1,21 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
+
+# Only load .env file if DATABASE_URL not already set by environment (e.g. Railway)
+if not os.environ.get("DATABASE_URL"):
+    load_dotenv()
+
+def get_db_url():
+    url = os.environ.get("DATABASE_URL", "sqlite:///fieldforce.db")
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if not url:
+        url = "sqlite:///fieldforce.db"
+    return url
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", "sqlite:///fieldforce.db"
-    )
+    SQLALCHEMY_DATABASE_URI = get_db_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
