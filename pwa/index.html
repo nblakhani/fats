@@ -629,18 +629,50 @@ function detectIOS() {
   }
 }
 
-// ── GPS ───────────────────────────────────────
+// ── GPS + REVERSE GEOCODING ──────────────────
 function captureGPS() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
-    pos => {
+    async pos => {
       gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const bars = document.querySelectorAll('#gpsBar, #gpsBarText');
       bars.forEach(b => b.style.display = 'flex');
-      document.getElementById('gpsText').textContent =
-        `Location: ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
-      document.getElementById('gpsTextForm').textContent =
-        `Location captured: ${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
+
+      // Show coordinates immediately
+      document.getElementById('gpsText').textContent = 'Getting address…';
+      document.getElementById('gpsTextForm').textContent = 'Getting address…';
+
+      // Reverse geocode using OpenStreetMap Nominatim (free, no key)
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${gpsCoords.lat}&lon=${gpsCoords.lng}&format=json`,
+          { headers: { 'Accept-Language': 'en' } }
+        );
+        const geo = await r.json();
+        const addr = geo.address || {};
+
+        // Build readable address: suburb/neighbourhood, city, state
+        const parts = [
+          addr.suburb || addr.neighbourhood || addr.road || addr.village,
+          addr.city || addr.town || addr.county,
+          addr.state
+        ].filter(Boolean);
+
+        const address = parts.join(', ') || geo.display_name || `${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
+        gpsCoords.address = address;
+
+        document.getElementById('gpsText').textContent = `📍 ${address}`;
+        document.getElementById('gpsTextForm').textContent = `📍 ${address}`;
+
+        // Auto-fill location field in text form if empty
+        const locField = document.getElementById('f-location');
+        if (locField && !locField.value) locField.value = address;
+
+      } catch(e) {
+        const fallback = `${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
+        document.getElementById('gpsText').textContent = `📍 ${fallback}`;
+        document.getElementById('gpsTextForm').textContent = `📍 ${fallback}`;
+      }
     },
     () => {}, { enableHighAccuracy: true }
   );
@@ -899,6 +931,7 @@ async function submitEntry(src) {
   if (gpsCoords) {
     payload.gps_lat = gpsCoords.lat;
     payload.gps_lng = gpsCoords.lng;
+    if (gpsCoords.address) payload.location = payload.location || gpsCoords.address;
   }
 
   // Clean undefined
