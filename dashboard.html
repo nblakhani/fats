@@ -364,69 +364,6 @@ tr:hover td { background: var(--surface2); }
 .fb-btn.coaching.selected { background: #faeeda; border-color: #854f0b; color: #854f0b; }
 .fb-btn.support:hover { background: var(--blue-light); border-color: var(--blue); }
 .fb-btn.support.selected { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
-/* AI FEATURES */
-.ai-score-btn {
-  background: linear-gradient(135deg, #1a472a, #2d6a4f);
-  color: #fff;
-  border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  cursor: pointer;
-  font-family: inherit;
-  margin-left: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: opacity 0.15s;
-}
-.ai-score-btn:hover { opacity: 0.85; }
-.ai-score-btn:disabled { opacity: 0.5; cursor: wait; }
-
-.ai-score-panel {
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 1.6;
-  border: 1px solid var(--border);
-  background: var(--surface2);
-}
-.ai-score-num {
-  font-size: 22px;
-  font-weight: 700;
-  font-family: "DM Mono", monospace;
-}
-.score-high  { color: #3b6d11; }
-.score-mid   { color: #854f0b; }
-.score-low   { color: #a32d2d; }
-
-.ai-intel-btn {
-  background: var(--blue-light);
-  color: var(--blue);
-  border: 1px solid var(--blue);
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
-}
-.ai-intel-btn:hover { opacity: 0.8; }
-.ai-intel-btn:disabled { opacity: 0.5; cursor: wait; }
-
-.ai-intel-panel {
-  background: var(--blue-light);
-  border: 1px solid var(--blue);
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.7;
-  margin-top: 10px;
-  color: var(--blue);
-}
-.ai-intel-panel strong { color: var(--text); }
-
 .report-text {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -498,7 +435,7 @@ tr:hover td { background: var(--surface2); }
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-title">Apex FPTS</div>
+      <div class="logo-title">Field Force</div>
       <div class="logo-sub">Manager Dashboard</div>
     </div>
     <nav class="nav">
@@ -548,7 +485,7 @@ tr:hover td { background: var(--surface2); }
         Master Data
       </div>
     <div class="sidebar-footer">
-      Apex FPTS · Railway Cloud
+      Connected to localhost:5000
     </div>
   </aside>
 
@@ -936,18 +873,8 @@ const LOB_COLORS = {
 
 // ── DASHBOARD ────────────────────────────────
 async function loadDashboard() {
-  const since = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
-
-  // Fire ALL calls in parallel for speed
-  const [lobVisits, summary, today, fu, eod] = await Promise.all([
-    api('/visits/?from='+since),
-    api('/reports/summary/?days=7'),
-    api('/visits/today/'),
-    api('/follow-ups/upcoming/?days=7'),
-    api('/reports/eod/')
-  ]);
-
   // LOB breakdown
+  const lobVisits = await api('/visits/?from='+new Date(Date.now()-7*86400000).toISOString().slice(0,10));
   if (lobVisits) {
     const lobCounts = {};
     lobVisits.forEach(v => {
@@ -974,33 +901,39 @@ async function loadDashboard() {
     }).join('') || '<div style="color:var(--text3);font-size:13px;">No visits this week</div>';
   }
 
-  // Metrics
+  const [summary, today, fu, eod] = await Promise.all([
+    api('/reports/summary?days=7'),
+    api('/visits/today'),
+    api('/follow-ups/upcoming?days=7'),
+    api('/reports/eod')
+  ]);
+
   if (summary) {
     document.getElementById('dashMetrics').innerHTML = `
-      <div class="metric ok" onclick="drillDown('visits')" style="cursor:pointer;" title="Click to see all visits this week">
+      <div class="metric ok">
         <div class="metric-val">${summary.total_visits}</div>
         <div class="metric-lbl">Visits this week</div>
-        <div class="metric-sub">${summary.active_staff || 0} staff active · <span style="color:var(--green);font-size:10px;">view →</span></div>
+        <div class="metric-sub">${summary.active_staff || 0} staff active</div>
       </div>
-      <div class="metric" onclick="drillDown('followups')" style="cursor:pointer;" title="Click to see all open follow-ups">
+      <div class="metric">
         <div class="metric-val">${summary.open_follow_ups}</div>
         <div class="metric-lbl">Open follow-ups</div>
-        <div class="metric-sub">${summary.overdue_follow_ups} overdue · <span style="color:var(--green);font-size:10px;">view →</span></div>
+        <div class="metric-sub">${summary.overdue_follow_ups} overdue</div>
       </div>
-      <div class="metric ${summary.overdue_follow_ups>0?'warn':''}" onclick="drillDown('overdue')" style="cursor:pointer;" title="Click to see overdue follow-ups">
+      <div class="metric ${summary.overdue_follow_ups>0?'warn':''}">
         <div class="metric-val">${summary.overdue_follow_ups}</div>
         <div class="metric-lbl">Overdue follow-ups</div>
-        <div class="metric-sub">Need immediate attention · <span style="font-size:10px;">view →</span></div>
+        <div class="metric-sub">Need immediate attention</div>
       </div>
-      <div class="metric ${summary.help_needed>0?'warn':''}" onclick="drillDown('help')" style="cursor:pointer;" title="Click to see help requests">
+      <div class="metric ${summary.help_needed>0?'warn':''}">
         <div class="metric-val">${summary.help_needed}</div>
         <div class="metric-lbl">Help needed</div>
-        <div class="metric-sub">From management · <span style="font-size:10px;">view →</span></div>
+        <div class="metric-sub">From management</div>
       </div>
     `;
   }
 
-  // Today's visits
+  // Today's visits compact
   if (today && today.length) {
     let html = '';
     today.forEach(s => {
@@ -1091,15 +1024,11 @@ function visitCard(v) {
       ${v.action_items&&v.action_items.length?`<div class="detail-row"><div class="detail-key">Action items</div><div class="detail-val action">${v.action_items.map(a=>a.description).join('<br>')}</div></div>`:''}
       ${v.notes?`<div class="detail-row"><div class="detail-key">Notes</div><div class="detail-val">${v.notes}</div></div>`:''}
       ${v.follow_ups&&v.follow_ups.length?`<div class="detail-row"><div class="detail-key">Follow-up</div><div class="detail-val fu">${v.follow_ups.map(f=>fmtDate(f.due_date)).join(', ')}</div></div>`:''}
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
         <button class="btn btn-sm" onclick="openFeedback('${v.id}','${v.staff_id}','${v.staff_name||''}','${v.client_name||''}')" style="font-size:11px;">
-          💬 Send feedback
-        </button>
-        <button class="ai-score-btn" id="score-btn-${v.id}" onclick="scoreVisit('${v.id}',this)">
-          ✦ AI Score
+          💬 Send feedback to ${v.staff_name||'staff'}
         </button>
       </div>
-      <div id="score-panel-${v.id}" style="display:none;" class="ai-score-panel"></div>
     </div>
   </div>`;
 }
@@ -1382,18 +1311,16 @@ function copyReport() {
 }
 
 function escHtml(t) {
-  return t.split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── INIT ─────────────────────────────────────
-// Load only what's needed for the active tab on startup
-loadDashboard();  // home tab only
+loadDashboard();
+loadStaff();
 document.getElementById('vFromDate').value = TODAY;
 document.getElementById('vToDate').value   = TODAY;
 document.getElementById('eodDate').value   = TODAY;
 setRefreshTime();
-// Defer staff list load (needed for filters) — load after 1 second
-setTimeout(loadStaff, 1000);
 
 // ── FEEDBACK SYSTEM ──────────────────────────
 let fbState = { visitId: null, staffId: null, staffName: null, selectedType: null };
@@ -1503,7 +1430,7 @@ async function loadAdminStaff() {
     <td>${s.rating ? '⭐'.repeat(s.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(s.rating_comment||'').slice(0,30)}</span></td>
     <td>${s.phone}</td>
     <td>${badge(s.active?'Active':'Inactive', s.active?'badge-green':'badge-red')}</td>
-    <td><button class="btn btn-sm" onclick="editStaff(${JSON.stringify(s).split('"').join('&quot;')})">Edit</button></td>
+    <td><button class="btn btn-sm" onclick="editStaff(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button></td>
   </tr>`).join('') + '</tbody></table>';
 }
 
@@ -1609,10 +1536,7 @@ async function loadAdminClients() {
     <td>${c.contact_name||'—'}<br><span style="font-size:11px;color:var(--text3);">${c.contact_phone||''}</span></td>
     <td>${badge(c.account_tier||'standard', tierClass(c.account_tier))}</td>
     <td>${c.rating ? '⭐'.repeat(c.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(c.rating_comment||'').slice(0,25)}</span></td>
-    <td style="white-space:nowrap;">
-      <button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).split('"').join('&quot;')})">Edit</button>
-      <button class="ai-intel-btn" style="margin-left:4px;padding:3px 8px;font-size:11px;" onclick="clientIntel('${c.id}','${c.company_name}',this)">✦ Intel</button>
-    </td>
+    <td><button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button></td>
   </tr>`).join('') + '</tbody></table>';
 }
 
@@ -1700,293 +1624,6 @@ async function saveClient() {
 document.getElementById('staffModal').addEventListener('click', e => { if(e.target===document.getElementById('staffModal')) closeStaffModal(); });
 document.getElementById('clientModal').addEventListener('click', e => { if(e.target===document.getElementById('clientModal')) closeClientModal(); });
 
-
-// ── AI FEATURES ───────────────────────────────
-const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
-
-async function callClaude(system, user) {
-  const r = await fetch(CLAUDE_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 1000,
-      system,
-      messages: [{ role: 'user', content: user }]
-    })
-  });
-  const d = await r.json();
-  return d.content?.[0]?.text || '';
-}
-
-// ── VISIT QUALITY SCORER ──────────────────────
-const SCORE_SYSTEM = `You are a field sales manager at Apex Corporation India, an industrial equipment company.
-Score a field visit log on quality out of 10. Be honest and direct.
-
-Scoring criteria:
-- Purpose (2pts): Is it specific with product/quantity/context?
-- Previous visit summary (2pts): Does it provide continuity from last visit?
-- Action items (2pts): Are they specific, actionable, with clear next steps?
-- Rep met (1pt): Is the contact name and designation recorded?
-- Time tracking (1pt): Are time in and time out recorded?
-- Notes/outcome (2pts): Do they capture client sentiment, competitive intel, or key observations?
-
-Respond ONLY in this JSON format, no markdown:
-{
-  "score": <number 1-10>,
-  "verdict": "<one line summary>",
-  "strengths": ["<point>", "<point>"],
-  "improvements": ["<specific suggestion>", "<specific suggestion>"],
-  "missing": ["<field or info missing>"]
-}`;
-
-async function scoreVisit(visitId, btn) {
-  // Fetch full visit details
-  const panel = document.getElementById('score-panel-' + visitId);
-  btn.disabled = true;
-  btn.textContent = '⟳ Scoring…';
-  panel.style.display = 'block';
-  panel.innerHTML = '<span class="spinner"></span> AI is reviewing this visit…';
-
-  try {
-    const vResp = await fetch(API + '/visits/' + visitId + '/');
-    const v = await vResp.json();
-
-    const visitText = `
-Visit details:
-- Client: ${v.client_name || 'Not specified'}
-- Staff: ${v.staff_name || 'Not specified'}
-- Visit type: ${v.visit_type || 'Not specified'}
-- LOB: ${v.lob || 'Not specified'}
-- Rep met: ${v.rep_met || 'Not recorded'}
-- Time in: ${v.time_in || 'Not recorded'}
-- Time out: ${v.time_out || 'Not recorded'}
-- Purpose: ${v.purpose || 'Not recorded'}
-- Previous visit summary: ${v.prev_visit_summary || 'Not recorded'}
-- Action items: ${(v.action_items||[]).map(a=>a.description).join('; ') || 'None recorded'}
-- Help needed: ${v.action_items?.find(a=>a.help_needed)?.help_needed || 'None'}
-- Notes: ${v.notes || 'Not recorded'}
-- Follow-up date: ${v.follow_ups?.length ? v.follow_ups[0].due_date : 'Not set'}
-`;
-
-    const raw = await callClaude(SCORE_SYSTEM, visitText);
-    const result = JSON.parse(raw.split('```json').join('').split('```').join('').trim());
-    const score = result.score || 0;
-    const scoreClass = score >= 8 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
-
-    panel.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-        <div class="ai-score-num ${scoreClass}">${score}<span style="font-size:13px;font-weight:400;color:var(--text3)">/10</span></div>
-        <div>
-          <div style="font-weight:600;font-size:12px;">${result.verdict}</div>
-          <div style="font-size:11px;color:var(--text3);">AI visit quality score</div>
-        </div>
-      </div>
-      ${result.strengths?.length ? `
-        <div style="margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:#3b6d11;margin-bottom:3px;">✓ Strengths</div>
-          ${result.strengths.map(s=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${s}</div>`).join('')}
-        </div>` : ''}
-      ${result.improvements?.length ? `
-        <div style="margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:#854f0b;margin-bottom:3px;">↑ Improvements</div>
-          ${result.improvements.map(i=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${i}</div>`).join('')}
-        </div>` : ''}
-      ${result.missing?.length ? `
-        <div>
-          <div style="font-size:11px;font-weight:600;color:#a32d2d;margin-bottom:3px;">✗ Missing</div>
-          ${result.missing.map(m=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${m}</div>`).join('')}
-        </div>` : ''}
-    `;
-    btn.textContent = '✦ Re-score';
-    btn.disabled = false;
-
-  } catch(e) {
-    panel.innerHTML = '<span style="color:var(--red);font-size:12px;">Scoring failed — ' + e.message + '</span>';
-    btn.textContent = '✦ AI Score';
-    btn.disabled = false;
-  }
-}
-
-// ── CLIENT INTELLIGENCE SUMMARY ───────────────
-const INTEL_SYSTEM = `You are a senior sales manager at Apex Corporation India, reviewing a client's complete visit history.
-Write a concise 4-sentence client intelligence summary covering:
-1. Account status and relationship strength
-2. Key products/LOBs being discussed and pipeline status
-3. Key contacts and decision makers
-4. Recommended next action
-
-Be specific — use actual product names, amounts, and dates from the data.
-Write in professional but direct language. No bullet points — flowing sentences only.`;
-
-async function clientIntel(clientId, clientName, btn) {
-  const panel = document.getElementById('clientIntelPanel');
-  btn.disabled = true;
-  btn.textContent = '⟳ Analysing…';
-  panel.style.display = 'block';
-  panel.innerHTML = '<span class="spinner"></span> AI is analysing visit history for ' + clientName + '…';
-
-  try {
-    const vResp = await fetch(API + '/clients/' + clientId + '/visits/');
-    const visits = await vResp.json();
-
-    if (!visits || visits.length === 0) {
-      panel.innerHTML = '<span style="color:var(--text3);font-size:13px;">No visit history found for this client.</span>';
-      btn.disabled = false;
-      btn.textContent = '✦ AI Intel';
-      return;
-    }
-
-    const historyText = `Client: ${clientName}
-Total visits: ${visits.length}
-
-Visit history (most recent first):
-${visits.slice(0,10).map((v,i) => `
-Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
-  Rep met: ${v.rep_met || 'Not recorded'}
-  LOB: ${v.lob || 'Not specified'}
-  Purpose: ${v.purpose || 'Not recorded'}
-  Previous summary: ${v.prev_visit_summary || 'None'}
-  Actions: ${(v.action_items||[]).map(a=>a.description).join('; ') || 'None'}
-  Notes: ${v.notes || 'None'}
-  Follow-up: ${(v.follow_ups||[]).map(f=>f.due_date).join(', ') || 'None set'}
-`).join('')}`;
-
-    const summary = await callClaude(INTEL_SYSTEM, historyText);
-
-    panel.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:700;color:var(--blue);">✦ AI Client Intelligence — ${clientName}</div>
-        <div style="font-size:10px;color:var(--text3);">Based on ${visits.length} visit${visits.length!==1?'s':''}</div>
-      </div>
-      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.split(String.fromCharCode(10)).join('<br>')}</div>
-    `;
-    btn.textContent = '✦ Refresh Intel';
-    btn.disabled = false;
-
-  } catch(e) {
-    panel.innerHTML = '<span style="color:var(--red);font-size:12px;">Analysis failed — ' + e.message + '</span>';
-    btn.textContent = '✦ AI Intel';
-    btn.disabled = false;
-  }
-}
-
-
-// ── METRIC DRILL-DOWN ─────────────────────────
-function closeDrill() {
-  document.getElementById('drillModal').style.display = 'none';
-}
-document.getElementById('drillModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('drillModal')) closeDrill();
-});
-
-async function drillDown(type) {
-  const modal = document.getElementById('drillModal');
-  const title = document.getElementById('drillTitle');
-  const content = document.getElementById('drillContent');
-  modal.style.display = 'flex';
-  content.innerHTML = '<div class="loading"><span class="spinner"></span> Loading…</div>';
-
-  if (type === 'visits') {
-    title.textContent = 'Visits this week — all staff';
-    const since = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
-    const data = await api('/visits/?from=' + since);
-    if (!data || !data.length) { content.innerHTML='<div class="empty">No visits this week</div>'; return; }
-    // Group by staff
-    const byStaff = {};
-    data.forEach(v => {
-      if (!byStaff[v.staff_name]) byStaff[v.staff_name] = [];
-      byStaff[v.staff_name].push(v);
-    });
-    let html = '';
-    Object.entries(byStaff).forEach(([name, visits]) => {
-      html += `<div style="margin-bottom:16px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;">
-          <div class="avatar" style="width:28px;height:28px;font-size:11px;">${initials(name)}</div>
-          <div><div style="font-weight:600;font-size:13px;">${name}</div>
-          <div style="font-size:11px;color:var(--text3);">${visits.length} visit${visits.length!==1?'s':''}</div></div>
-        </div>`;
-      visits.forEach(v => {
-        html += `<div style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;margin-left:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div>
-              <div style="font-weight:500;font-size:13px;">${v.client_name}</div>
-              <div style="font-size:11px;color:var(--text2);">${v.visit_type} · ${fmtDate(v.visit_date)} ${v.time_in||''}</div>
-            </div>
-            <div style="text-align:right;">
-              ${badge(v.priority, priClass(v.priority))}
-              ${v.lob ? badge(v.lob,'b-purple') : ''}
-            </div>
-          </div>
-          ${v.purpose?`<div style="font-size:12px;color:var(--text2);margin-top:4px;">${v.purpose.slice(0,100)}</div>`:''}
-        </div>`;
-      });
-      html += '</div>';
-    });
-    content.innerHTML = html;
-
-  } else if (type === 'followups') {
-    title.textContent = 'Open follow-ups — all staff';
-    const data = await api('/follow-ups/?status=scheduled');
-    if (!data || !data.length) { content.innerHTML='<div class="empty">No open follow-ups</div>'; return; }
-    content.innerHTML = data.map(f => `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
-        <div>
-          <div style="font-weight:500;font-size:13px;">${f.client_name}</div>
-          <div style="font-size:12px;color:var(--text2);">${f.assigned_to}</div>
-          ${f.notes?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">${f.notes.slice(0,80)}</div>`:''}
-        </div>
-        <div style="text-align:right;white-space:nowrap;">
-          <div style="font-size:12px;font-weight:600;color:${f.due_date<TODAY?'var(--red)':'var(--blue)'};">${fmtDate(f.due_date)}</div>
-          ${f.due_date<TODAY?'<div style="font-size:10px;color:var(--red);">OVERDUE</div>':''}
-        </div>
-      </div>`).join('');
-
-  } else if (type === 'overdue') {
-    title.textContent = '⚠ Overdue follow-ups — immediate attention needed';
-    const data = await api('/follow-ups/?overdue=true');
-    if (!data || !data.length) { content.innerHTML='<div class="empty" style="color:var(--green);">✓ No overdue follow-ups!</div>'; return; }
-    content.innerHTML = `
-      <div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);">
-        <b>${data.length} overdue follow-up${data.length!==1?'s':''}</b> — contact the relevant staff members immediately.
-      </div>` +
-      data.map(f => `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
-          <div>
-            <div style="font-weight:500;font-size:13px;">${f.client_name}</div>
-            <div style="font-size:12px;color:var(--text2);">${f.assigned_to}</div>
-            ${f.notes?`<div style="font-size:12px;color:var(--amber);margin-top:2px;">${f.notes.slice(0,80)}</div>`:''}
-          </div>
-          <div style="text-align:right;white-space:nowrap;">
-            <div style="font-size:12px;font-weight:600;color:var(--red);">${fmtDate(f.due_date)}</div>
-            <div style="font-size:10px;color:var(--red);">${Math.floor((new Date()-new Date(f.due_date))/86400000)} days overdue</div>
-          </div>
-        </div>`).join('');
-
-  } else if (type === 'help') {
-    title.textContent = 'Help needed from management';
-    const data = await api('/action-items/?has_help=true&status=open');
-    if (!data || !data.length) { content.innerHTML='<div class="empty" style="color:var(--green);">✓ No help requests!</div>'; return; }
-    content.innerHTML = `
-      <div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--amber);">
-        <b>${data.length} item${data.length!==1?'s':''} need${data.length===1?'s':''} your attention.</b> Review and take action on each.
-      </div>` +
-      data.map(a => `
-        <div style="padding:10px 0;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div style="font-weight:500;font-size:13px;">${a.staff_name}</div>
-            <div>${badge(a.status, a.status==='open'?'badge-amber':'badge-green')}</div>
-          </div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${a.description}</div>
-          <div style="font-size:12px;color:var(--red);font-weight:500;margin-top:4px;padding:6px 10px;background:var(--red-light);border-radius:6px;">
-            🙏 Help needed: ${a.help_needed}
-          </div>
-          ${a.due_date?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">Due: ${fmtDate(a.due_date)}</div>`:''}
-        </div>`).join('');
-  }
-}
-
 </script>
 
 <!-- FEEDBACK MODAL -->
@@ -2003,18 +1640,6 @@ async function drillDown(type) {
       <button class="btn btn-primary" onclick="submitFeedback()" style="flex:1;">Send feedback</button>
       <button class="btn" onclick="closeFeedback()">Cancel</button>
     </div>
-  </div>
-</div>
-
-
-<!-- DRILL DOWN MODAL -->
-<div id="drillModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;">
-  <div style="background:var(--surface);border-radius:var(--radius);width:100%;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;">
-      <div style="font-size:15px;font-weight:600;" id="drillTitle">Details</div>
-      <button onclick="closeDrill()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:0 4px;">×</button>
-    </div>
-    <div id="drillContent" style="padding:16px 20px;"></div>
   </div>
 </div>
 
