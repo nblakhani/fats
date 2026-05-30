@@ -1,16 +1,15 @@
 import os
 from dotenv import load_dotenv
 
-# Only load .env file if DATABASE_URL not already set by environment (e.g. Railway)
-if not os.environ.get("DATABASE_URL"):
-    load_dotenv()
+load_dotenv()
 
 def get_db_url():
-    url = os.environ.get("DATABASE_URL", "sqlite:///fieldforce.db")
+    url = os.environ.get("DATABASE_URL", "")
+    # Skip if empty or localhost (Railway shared variable default)
+    if not url or "localhost" in url:
+        url = "postgresql://postgres:qRYplPzRAIdZNmHxTRfxLlyMEacNSsXG@postgres.railway.internal:5432/railway"
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
-    if not url:
-        url = "sqlite:///fieldforce.db"
     return url
 
 class Config:
