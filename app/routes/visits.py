@@ -36,6 +36,8 @@ def list_visits():
     if to_str:     q = q.filter(Visit.visit_date <= to_str)
     if visit_type: q = q.filter_by(visit_type=visit_type)
     if priority:   q = q.filter_by(priority=priority)
+    lob = request.args.get('lob')
+    if lob:        q = q.filter_by(lob=lob)
 
     visits = q.order_by(Visit.visit_date.desc(), Visit.time_in).all()
     return jsonify([v.to_dict() for v in visits])

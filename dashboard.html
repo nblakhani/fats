@@ -504,7 +504,11 @@ tr:hover td { background: var(--surface2); }
         <div class="metrics" id="dashMetrics">
           <div class="loading"><span class="spinner"></span>Loading…</div>
         </div>
-        <div class="two-col">
+        <div class="card" style="margin-bottom:16px;">
+        <div class="card-head"><span class="card-title">Activity by Line of Business (7 days)</span></div>
+        <div class="card-body" id="lobBreakdown"><div class="loading"><span class="spinner"></span></div></div>
+      </div>
+      <div class="two-col">
           <div>
             <div class="card">
               <div class="card-head"><span class="card-title">Today's visits</span></div>
@@ -544,6 +548,18 @@ tr:hover td { background: var(--surface2); }
           <select id="vPriFilter" onchange="loadVisits()">
             <option value="">All priorities</option>
             <option>High</option><option>Medium</option><option>Low</option>
+          </select>
+          <select id="vLobFilter" onchange="loadVisits()">
+            <option value="">All LOBs</option>
+          <option value="Compressed Air">Compressed Air</option>
+          <option value="Power Technique">Power Technique</option>
+          <option value="Mining Equipment">Mining Equipment</option>
+          <option value="Industrial Bearings">Industrial Bearings</option>
+          <option value="Office Automation">Office Automation</option>
+          <option value="Motors & Fans">Motors & Fans</option>
+          <option value="Material Handling">Material Handling</option>
+          <option value="Printing">Printing</option>
+          <option value="Computers & IT">Computers & IT</option>
           </select>
         </div>
         <div id="visitsContent"><div class="loading"><span class="spinner"></span>Loading…</div></div>
@@ -712,8 +728,52 @@ function initials(name) {
   return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 }
 
+// ── LOB DEFINITIONS ──────────────────────────
+const LOBS = ['Compressed Air','Power Technique','Mining Equipment','Industrial Bearings',
+              'Office Automation','Motors & Fans','Material Handling','Printing','Computers & IT'];
+
+const LOB_COLORS = {
+  'Compressed Air':     '#e8f4fd',
+  'Power Technique':    '#fdf3e8',
+  'Mining Equipment':   '#f3f3f3',
+  'Industrial Bearings':'#fdf0ee',
+  'Office Automation':  '#eeedfe',
+  'Motors & Fans':      '#e8f0eb',
+  'Material Handling':  '#faeeda',
+  'Printing':           '#eaf1f9',
+  'Computers & IT':     '#f0f9ee',
+};
+
 // ── DASHBOARD ────────────────────────────────
 async function loadDashboard() {
+  // LOB breakdown
+  const lobVisits = await api('/visits?from='+new Date(Date.now()-7*86400000).toISOString().slice(0,10));
+  if (lobVisits) {
+    const lobCounts = {};
+    lobVisits.forEach(v => {
+      const l = v.lob || 'Unassigned';
+      lobCounts[l] = (lobCounts[l]||0) + 1;
+    });
+    const total = lobVisits.length || 1;
+    const sorted = Object.entries(lobCounts).sort((a,b)=>b[1]-a[1]);
+    const lobColors = {'Compressed Air':'#185fa5','Power Technique':'#854f0b','Mining Equipment':'#6b6860',
+      'Industrial Bearings':'#a32d2d','Office Automation':'#534ab7','Motors & Fans':'#3b6d11',
+      'Material Handling':'#854f0b','Printing':'#185fa5','Computers & IT':'#3b6d11','Unassigned':'#9e9b92'};
+    document.getElementById('lobBreakdown').innerHTML = sorted.map(([lob,count]) => {
+      const pct = Math.round(count/total*100);
+      const color = lobColors[lob]||'#185fa5';
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+          <span style="font-weight:500;">${lob}</span>
+          <span style="color:var(--text2);">${count} visit${count!==1?'s':''} (${pct}%)</span>
+        </div>
+        <div style="height:6px;background:var(--surface2);border-radius:3px;">
+          <div style="height:6px;border-radius:3px;background:${color};width:${pct}%;transition:width 0.5s;"></div>
+        </div>
+      </div>`;
+    }).join('') || '<div style="color:var(--text3);font-size:13px;">No visits this week</div>';
+  }
+
   const [summary, today, fu, eod] = await Promise.all([
     api('/reports/summary?days=7'),
     api('/visits/today'),
@@ -827,7 +887,7 @@ function visitCard(v) {
       </div>
       <div style="text-align:right">
         <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${timeStr}</div>
-        ${badge(v.visit_type, typeClass(v.visit_type))} ${badge(v.priority, priClass(v.priority))}
+        ${badge(v.visit_type, typeClass(v.visit_type))} ${badge(v.priority, priClass(v.priority))} ${v.lob?badge(v.lob,'b-purple'):''}
         ${v.source==='voice'?badge('Voice','badge-green'):''}
       </div>
     </div>
@@ -876,6 +936,7 @@ async function loadVisits() {
       <td style="white-space:nowrap">${fmtDate(v.visit_date)}</td>
       <td>${v.staff_name||'—'}</td>
       <td><strong>${v.client_name||'—'}</strong></td>
+      <td>${v.lob?badge(v.lob,'b-purple'):'—'}</td>
       <td>${v.rep_met||'—'}</td>
       <td>${badge(v.visit_type, typeClass(v.visit_type))}</td>
       <td>${v.time_in||'—'}</td>

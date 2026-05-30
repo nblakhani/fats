@@ -61,6 +61,7 @@ class Visit(db.Model):
             "notes":              self.notes,
             "gps_lat":            float(self.gps_lat)  if self.gps_lat  else None,
             "gps_lng":            float(self.gps_lng)  if self.gps_lng  else None,
+            "lob":               self.lob,
             "source":             self.source,
             "created_at":         self.created_at.isoformat(),
         }

@@ -484,6 +484,21 @@ textarea { min-height: 72px; resize: vertical; }
             <option>Delivery</option><option>Complaint</option>
           </select>
         </div>
+        <div class="field">
+          <div class="field-label">Line of Business (LOB)</div>
+          <select id="f-lob">
+            <option value="">Select LOB</option>
+            <option>Compressed Air</option>
+            <option>Power Technique</option>
+            <option>Mining Equipment</option>
+            <option>Industrial Bearings</option>
+            <option>Office Automation</option>
+            <option>Motors & Fans</option>
+            <option>Material Handling</option>
+            <option>Printing</option>
+            <option>Computers & IT</option>
+          </select>
+        </div>
         <div class="row2">
           <div class="field"><div class="field-label">Time in</div><input type="time" id="f-tin"></div>
           <div class="field"><div class="field-label">Time out</div><input type="time" id="f-tout"></div>
@@ -634,7 +649,7 @@ textarea { min-height: 72px; resize: vertical; }
 const API = 'https://fats-production.up.railway.app/api';
 const BASE = API;
 const SYSTEM_PROMPT = `You parse a spoken field visit log into JSON for Apex Corporation India Pvt Ltd (industrial equipment company in Jamshedpur).
-Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
+Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), lob (one of: Compressed Air/Power Technique/Mining Equipment/Industrial Bearings/Office Automation/Motors & Fans/Material Handling/Printing/Computers & IT — infer from context e.g. compressor=Compressed Air, rock drill=Mining Equipment, Canon=Office Automation, laptop=Computers & IT), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
 Respond ONLY with valid JSON, no markdown. Today: ${new Date().toISOString().slice(0,10)}.`;
 
 let staffList = [], clientList = [];
@@ -881,6 +896,7 @@ function buildParsedForm(data) {
     { id:'vf-action',  label:'Action items',      type:'textarea', key:'actionItems' },
     { id:'vf-help',    label:'Help needed',       type:'textarea', key:'helpNeeded' },
     { id:'vf-followup',label:'Follow-up date',    type:'date',     key:'followUpDate' },
+    { id:'vf-lob',     label:'Line of Business',  type:'select-lob' },
     { id:'vf-priority',label:'Priority',          type:'select-priority' },
     { id:'vf-notes',   label:'Notes',             type:'textarea', key:'notes' },
   ];
@@ -899,6 +915,9 @@ function buildParsedForm(data) {
     } else if (f.type === 'select-type') {
       const types = ['Follow-up','Sales call','Prospecting','Service visit','Demo','Collection','Delivery','Complaint','Other'];
       html += `<select id="${f.id}">${types.map(t=>`<option${data.visitType===t?' selected':''}>${t}</option>`).join('')}</select>`;
+    } else if (f.type === 'select-lob') {
+      const lobs = ['Compressed Air','Power Technique','Mining Equipment','Industrial Bearings','Office Automation','Motors & Fans','Material Handling','Printing','Computers & IT'];
+      html += `<select id="${f.id}"><option value="">Select LOB</option>${lobs.map(l=>`<option${data.lob===l?' selected':''}>${l}</option>`).join('')}</select>`;
     } else if (f.type === 'select-priority') {
       html += `<select id="${f.id}">
         <option${data.priority==='High'?' selected':''}>High</option>
@@ -950,6 +969,7 @@ async function submitEntry(src) {
     };
     if (clientId) payload.client_id = clientId;
     else payload.client_name = clientName;
+    if (g('vf-lob'))      payload.lob = g('vf-lob');
     if (g('vf-location')) payload.location = g('vf-location');
     if (g('vf-repmet'))   payload.rep_met = g('vf-repmet');
     if (g('vf-tin'))      payload.time_in = g('vf-tin');
@@ -978,6 +998,7 @@ async function submitEntry(src) {
     };
     if (clientId) payload.client_id = clientId;
     else payload.client_name = newClient;
+    if (g('f-lob'))      payload.lob = g('f-lob');
     if (g('f-rep'))      payload.rep_met = g('f-rep');
     if (g('f-location')) payload.location = g('f-location');
     if (g('f-tin'))      payload.time_in = g('f-tin');

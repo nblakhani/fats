@@ -13,6 +13,7 @@ class Staff(db.Model):
     # roles: field_staff | manager | admin
     region     = db.Column(db.String(100), nullable=True)
     manager_id = db.Column(db.String(36),  db.ForeignKey("staff.id"), nullable=True)
+    lob        = db.Column(db.String(200), nullable=True)  # primary LOB(s) assigned
     active     = db.Column(db.Boolean,     default=True)
     created_at = db.Column(db.DateTime,    default=datetime.utcnow)
 
@@ -31,6 +32,7 @@ class Staff(db.Model):
             "role":       self.role,
             "region":     self.region,
             "manager_id": self.manager_id,
+            "lob":        self.lob,
             "active":     self.active,
             "created_at": self.created_at.isoformat(),
         }
