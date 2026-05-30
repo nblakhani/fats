@@ -936,8 +936,18 @@ const LOB_COLORS = {
 
 // ── DASHBOARD ────────────────────────────────
 async function loadDashboard() {
+  const since = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+
+  // Fire ALL calls in parallel for speed
+  const [lobVisits, summary, today, fu, eod] = await Promise.all([
+    api('/visits/?from='+since),
+    api('/reports/summary/?days=7'),
+    api('/visits/today/'),
+    api('/follow-ups/upcoming/?days=7'),
+    api('/reports/eod/')
+  ]);
+
   // LOB breakdown
-  const lobVisits = await api('/visits/?from='+new Date(Date.now()-7*86400000).toISOString().slice(0,10));
   if (lobVisits) {
     const lobCounts = {};
     lobVisits.forEach(v => {
@@ -964,13 +974,7 @@ async function loadDashboard() {
     }).join('') || '<div style="color:var(--text3);font-size:13px;">No visits this week</div>';
   }
 
-  const [summary, today, fu, eod] = await Promise.all([
-    api('/reports/summary?days=7'),
-    api('/visits/today'),
-    api('/follow-ups/upcoming?days=7'),
-    api('/reports/eod')
-  ]);
-
+  // Metrics
   if (summary) {
     document.getElementById('dashMetrics').innerHTML = `
       <div class="metric ok" onclick="drillDown('visits')" style="cursor:pointer;" title="Click to see all visits this week">
@@ -996,7 +1000,7 @@ async function loadDashboard() {
     `;
   }
 
-  // Today's visits compact
+  // Today's visits
   if (today && today.length) {
     let html = '';
     today.forEach(s => {
