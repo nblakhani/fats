@@ -973,25 +973,25 @@ async function loadDashboard() {
 
   if (summary) {
     document.getElementById('dashMetrics').innerHTML = `
-      <div class="metric ok">
+      <div class="metric ok" onclick="drillDown('visits')" style="cursor:pointer;" title="Click to see all visits this week">
         <div class="metric-val">${summary.total_visits}</div>
         <div class="metric-lbl">Visits this week</div>
-        <div class="metric-sub">${summary.active_staff || 0} staff active</div>
+        <div class="metric-sub">${summary.active_staff || 0} staff active · <span style="color:var(--green);font-size:10px;">view →</span></div>
       </div>
-      <div class="metric">
+      <div class="metric" onclick="drillDown('followups')" style="cursor:pointer;" title="Click to see all open follow-ups">
         <div class="metric-val">${summary.open_follow_ups}</div>
         <div class="metric-lbl">Open follow-ups</div>
-        <div class="metric-sub">${summary.overdue_follow_ups} overdue</div>
+        <div class="metric-sub">${summary.overdue_follow_ups} overdue · <span style="color:var(--green);font-size:10px;">view →</span></div>
       </div>
-      <div class="metric ${summary.overdue_follow_ups>0?'warn':''}">
+      <div class="metric ${summary.overdue_follow_ups>0?'warn':''}" onclick="drillDown('overdue')" style="cursor:pointer;" title="Click to see overdue follow-ups">
         <div class="metric-val">${summary.overdue_follow_ups}</div>
         <div class="metric-lbl">Overdue follow-ups</div>
-        <div class="metric-sub">Need immediate attention</div>
+        <div class="metric-sub">Need immediate attention · <span style="font-size:10px;">view →</span></div>
       </div>
-      <div class="metric ${summary.help_needed>0?'warn':''}">
+      <div class="metric ${summary.help_needed>0?'warn':''}" onclick="drillDown('help')" style="cursor:pointer;" title="Click to see help requests">
         <div class="metric-val">${summary.help_needed}</div>
         <div class="metric-lbl">Help needed</div>
-        <div class="metric-sub">From management</div>
+        <div class="metric-sub">From management · <span style="font-size:10px;">view →</span></div>
       </div>
     `;
   }
@@ -1867,6 +1867,121 @@ Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
   }
 }
 
+
+// ── METRIC DRILL-DOWN ─────────────────────────
+function closeDrill() {
+  document.getElementById('drillModal').style.display = 'none';
+}
+document.getElementById('drillModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('drillModal')) closeDrill();
+});
+
+async function drillDown(type) {
+  const modal = document.getElementById('drillModal');
+  const title = document.getElementById('drillTitle');
+  const content = document.getElementById('drillContent');
+  modal.style.display = 'flex';
+  content.innerHTML = '<div class="loading"><span class="spinner"></span> Loading…</div>';
+
+  if (type === 'visits') {
+    title.textContent = 'Visits this week — all staff';
+    const since = new Date(Date.now()-7*86400000).toISOString().slice(0,10);
+    const data = await api('/visits/?from=' + since);
+    if (!data || !data.length) { content.innerHTML='<div class="empty">No visits this week</div>'; return; }
+    // Group by staff
+    const byStaff = {};
+    data.forEach(v => {
+      if (!byStaff[v.staff_name]) byStaff[v.staff_name] = [];
+      byStaff[v.staff_name].push(v);
+    });
+    let html = '';
+    Object.entries(byStaff).forEach(([name, visits]) => {
+      html += `<div style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;">
+          <div class="avatar" style="width:28px;height:28px;font-size:11px;">${initials(name)}</div>
+          <div><div style="font-weight:600;font-size:13px;">${name}</div>
+          <div style="font-size:11px;color:var(--text3);">${visits.length} visit${visits.length!==1?'s':''}</div></div>
+        </div>`;
+      visits.forEach(v => {
+        html += `<div style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;margin-left:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-weight:500;font-size:13px;">${v.client_name}</div>
+              <div style="font-size:11px;color:var(--text2);">${v.visit_type} · ${fmtDate(v.visit_date)} ${v.time_in||''}</div>
+            </div>
+            <div style="text-align:right;">
+              ${badge(v.priority, priClass(v.priority))}
+              ${v.lob ? badge(v.lob,'b-purple') : ''}
+            </div>
+          </div>
+          ${v.purpose?`<div style="font-size:12px;color:var(--text2);margin-top:4px;">${v.purpose.slice(0,100)}</div>`:''}
+        </div>`;
+      });
+      html += '</div>';
+    });
+    content.innerHTML = html;
+
+  } else if (type === 'followups') {
+    title.textContent = 'Open follow-ups — all staff';
+    const data = await api('/follow-ups/?status=scheduled');
+    if (!data || !data.length) { content.innerHTML='<div class="empty">No open follow-ups</div>'; return; }
+    content.innerHTML = data.map(f => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:500;font-size:13px;">${f.client_name}</div>
+          <div style="font-size:12px;color:var(--text2);">${f.assigned_to}</div>
+          ${f.notes?`<div style="font-size:12px;color:var(--text2);margin-top:2px;">${f.notes.slice(0,80)}</div>`:''}
+        </div>
+        <div style="text-align:right;white-space:nowrap;">
+          <div style="font-size:12px;font-weight:600;color:${f.due_date<TODAY?'var(--red)':'var(--blue)'};">${fmtDate(f.due_date)}</div>
+          ${f.due_date<TODAY?'<div style="font-size:10px;color:var(--red);">OVERDUE</div>':''}
+        </div>
+      </div>`).join('');
+
+  } else if (type === 'overdue') {
+    title.textContent = '⚠ Overdue follow-ups — immediate attention needed';
+    const data = await api('/follow-ups/?overdue=true');
+    if (!data || !data.length) { content.innerHTML='<div class="empty" style="color:var(--green);">✓ No overdue follow-ups!</div>'; return; }
+    content.innerHTML = `
+      <div style="background:var(--red-light);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);">
+        <b>${data.length} overdue follow-up${data.length!==1?'s':''}</b> — contact the relevant staff members immediately.
+      </div>` +
+      data.map(f => `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-weight:500;font-size:13px;">${f.client_name}</div>
+            <div style="font-size:12px;color:var(--text2);">${f.assigned_to}</div>
+            ${f.notes?`<div style="font-size:12px;color:var(--amber);margin-top:2px;">${f.notes.slice(0,80)}</div>`:''}
+          </div>
+          <div style="text-align:right;white-space:nowrap;">
+            <div style="font-size:12px;font-weight:600;color:var(--red);">${fmtDate(f.due_date)}</div>
+            <div style="font-size:10px;color:var(--red);">${Math.floor((new Date()-new Date(f.due_date))/86400000)} days overdue</div>
+          </div>
+        </div>`).join('');
+
+  } else if (type === 'help') {
+    title.textContent = 'Help needed from management';
+    const data = await api('/action-items/?has_help=true&status=open');
+    if (!data || !data.length) { content.innerHTML='<div class="empty" style="color:var(--green);">✓ No help requests!</div>'; return; }
+    content.innerHTML = `
+      <div style="background:var(--amber-light);border:1px solid var(--amber);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--amber);">
+        <b>${data.length} item${data.length!==1?'s':''} need${data.length===1?'s':''} your attention.</b> Review and take action on each.
+      </div>` +
+      data.map(a => `
+        <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="font-weight:500;font-size:13px;">${a.staff_name}</div>
+            <div>${badge(a.status, a.status==='open'?'badge-amber':'badge-green')}</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">${a.description}</div>
+          <div style="font-size:12px;color:var(--red);font-weight:500;margin-top:4px;padding:6px 10px;background:var(--red-light);border-radius:6px;">
+            🙏 Help needed: ${a.help_needed}
+          </div>
+          ${a.due_date?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">Due: ${fmtDate(a.due_date)}</div>`:''}
+        </div>`).join('');
+  }
+}
+
 </script>
 
 <!-- FEEDBACK MODAL -->
@@ -1883,6 +1998,18 @@ Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
       <button class="btn btn-primary" onclick="submitFeedback()" style="flex:1;">Send feedback</button>
       <button class="btn" onclick="closeFeedback()">Cancel</button>
     </div>
+  </div>
+</div>
+
+
+<!-- DRILL DOWN MODAL -->
+<div id="drillModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;">
+  <div style="background:var(--surface);border-radius:var(--radius);width:100%;max-width:700px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;">
+      <div style="font-size:15px;font-weight:600;" id="drillTitle">Details</div>
+      <button onclick="closeDrill()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);padding:0 4px;">×</button>
+    </div>
+    <div id="drillContent" style="padding:16px 20px;"></div>
   </div>
 </div>
 
