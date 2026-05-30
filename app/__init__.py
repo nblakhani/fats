@@ -5,11 +5,15 @@ from app.extensions import db, migrate, cors, scheduler
 def create_app(env="default"):
     app = Flask(__name__)
     app.config.from_object(config[env])
+    app.url_map.strict_slashes = False
 
     # Extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+
+    # Allow all origins for all routes
+    cors.init_app(app, resources={r"/*": {"origins": "*"}},
+                  supports_credentials=False)
 
     # Register blueprints
     from app.routes.staff import bp as staff_bp

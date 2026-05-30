@@ -578,6 +578,7 @@ textarea { min-height: 72px; resize: vertical; }
 
 <script>
 const API = 'https://fats-production.up.railway.app/api';
+const BASE = API;
 const SYSTEM_PROMPT = `You parse a spoken field visit log into JSON for Apex Corporation India Pvt Ltd (industrial equipment company in Jamshedpur).
 Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
 Respond ONLY with valid JSON, no markdown. Today: ${new Date().toISOString().slice(0,10)}.`;
@@ -647,7 +648,7 @@ function captureGPS() {
 
 // ── STAFF & CLIENTS ───────────────────────────
 async function loadStaff() {
-  const data = await api('/staff');
+  const data = await api('/staff/');
   if (!data) {
     document.getElementById('staffPicker').innerHTML =
       '<div style="color:var(--red);font-size:13px;padding:8px;">Cannot load staff — check connection</div>';
@@ -680,7 +681,7 @@ function selectStaff(id) {
 }
 
 async function loadClients() {
-  const data = await api('/clients');
+  const data = await api('/clients/');
   if (!data) {
     document.getElementById('f-client').innerHTML =
       '<option value="">Cannot load clients</option>';
@@ -922,7 +923,7 @@ async function postVisit(payload) {
     return true;
   }
   try {
-    const r = await fetch(API+'/visits', {
+    const r = await fetch(API+'/visits/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -944,7 +945,7 @@ async function syncOfflineQueue() {
   let synced = 0;
   for (const item of toSync) {
     try {
-      const r = await fetch(API+'/visits', {
+      const r = await fetch(API+'/visits/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item.payload)
