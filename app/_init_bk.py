@@ -5,15 +5,11 @@ from app.extensions import db, migrate, cors, scheduler
 def create_app(env="default"):
     app = Flask(__name__)
     app.config.from_object(config[env])
-    app.url_map.strict_slashes = False
 
     # Extensions
     db.init_app(app)
     migrate.init_app(app, db)
-
-    # Allow all origins for all routes
-    cors.init_app(app, resources={r"/*": {"origins": "*"}},
-                  supports_credentials=False)
+    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
 
     # Register blueprints
     from app.routes.staff import bp as staff_bp
@@ -22,7 +18,6 @@ def create_app(env="default"):
     from app.routes.action_items import bp as action_bp
     from app.routes.follow_ups import bp as followup_bp
     from app.routes.reports import bp as reports_bp
-    from app.routes.feedback import bp as feedback_bp
 
     app.register_blueprint(staff_bp,     url_prefix="/api/staff")
     app.register_blueprint(clients_bp,   url_prefix="/api/clients")
@@ -30,7 +25,6 @@ def create_app(env="default"):
     app.register_blueprint(action_bp,    url_prefix="/api/action-items")
     app.register_blueprint(followup_bp,  url_prefix="/api/follow-ups")
     app.register_blueprint(reports_bp,   url_prefix="/api/reports")
-    app.register_blueprint(feedback_bp,  url_prefix="/api/feedback")
 
     import os
     from flask import send_from_directory

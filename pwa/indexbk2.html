@@ -539,47 +539,6 @@ textarea { min-height: 72px; resize: vertical; }
     </div>
   </div>
 
-
-  <!-- CALENDAR -->
-  <div id="tab-cal" class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div class="section-title" style="margin-bottom:0;">My Calendar</div>
-      <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="calToday()">Today</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(-1)">&#8592;</button>
-      <div style="flex:1;text-align:center;font-weight:600;font-size:15px;" id="calMonthLabel"></div>
-      <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(1)">&#8594;</button>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg);">
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">S</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">M</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">T</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">W</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">T</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">F</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">S</div>
-      </div>
-      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
-    </div>
-    <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap;">
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:3px;vertical-align:middle;"></span>Visit</span>
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:3px;vertical-align:middle;"></span>Follow-up due</span>
-    </div>
-    <div id="calDayPanel" style="margin-top:12px;"></div>
-  </div>
-
-
-  <!-- FEEDBACK INBOX -->
-  <div id="tab-fb" class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div class="section-title" style="margin-bottom:0;">Feedback from Manager</div>
-      <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="markAllRead()">Mark all read</button>
-    </div>
-    <div id="fbInbox"><div class="loading"><span class="spinner"></span> Loading…</div></div>
-  </div>
-
 </div><!-- /main -->
 
 <!-- BOTTOM NAV -->
@@ -612,19 +571,6 @@ textarea { min-height: 72px; resize: vertical; }
       <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
     </svg>
     Follow-ups <span id="fuNavBadge"></span>
-  </button>
-  <button class="nav-btn" onclick="switchTab('cal')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-    Calendar
-  </button>
-  <button class="nav-btn" onclick="switchTab('fb')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-    Feedback <span id="fbNavBadge"></span>
   </button>
 </nav>
 
@@ -683,50 +629,18 @@ function detectIOS() {
   }
 }
 
-// ── GPS + REVERSE GEOCODING ──────────────────
+// ── GPS ───────────────────────────────────────
 function captureGPS() {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(
-    async pos => {
+    pos => {
       gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       const bars = document.querySelectorAll('#gpsBar, #gpsBarText');
       bars.forEach(b => b.style.display = 'flex');
-
-      // Show coordinates immediately
-      document.getElementById('gpsText').textContent = 'Getting address…';
-      document.getElementById('gpsTextForm').textContent = 'Getting address…';
-
-      // Reverse geocode using OpenStreetMap Nominatim (free, no key)
-      try {
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${gpsCoords.lat}&lon=${gpsCoords.lng}&format=json`,
-          { headers: { 'Accept-Language': 'en' } }
-        );
-        const geo = await r.json();
-        const addr = geo.address || {};
-
-        // Build readable address: suburb/neighbourhood, city, state
-        const parts = [
-          addr.suburb || addr.neighbourhood || addr.road || addr.village,
-          addr.city || addr.town || addr.county,
-          addr.state
-        ].filter(Boolean);
-
-        const address = parts.join(', ') || geo.display_name || `${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
-        gpsCoords.address = address;
-
-        document.getElementById('gpsText').textContent = `📍 ${address}`;
-        document.getElementById('gpsTextForm').textContent = `📍 ${address}`;
-
-        // Auto-fill location field in text form if empty
-        const locField = document.getElementById('f-location');
-        if (locField && !locField.value) locField.value = address;
-
-      } catch(e) {
-        const fallback = `${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
-        document.getElementById('gpsText').textContent = `📍 ${fallback}`;
-        document.getElementById('gpsTextForm').textContent = `📍 ${fallback}`;
-      }
+      document.getElementById('gpsText').textContent =
+        `Location: ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
+      document.getElementById('gpsTextForm').textContent =
+        `Location captured: ${gpsCoords.lat.toFixed(4)}, ${gpsCoords.lng.toFixed(4)}`;
     },
     () => {}, { enableHighAccuracy: true }
   );
@@ -764,8 +678,6 @@ function selectStaff(id) {
   const btn = document.getElementById('sp-'+id);
   if (btn) btn.classList.add('selected');
   showToast(`Logged in as ${staffList.find(s=>s.id===id)?.name||'staff'}`);
-  loadFeedbackBadge();
-  loadMyFU();
 }
 
 async function loadClients() {
@@ -784,14 +696,12 @@ async function loadClients() {
 // ── NAVIGATION ────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.nav-btn').forEach((b,i) =>
-    b.classList.toggle('active', ['voice','text','visits','fu','cal','fb'][i]===name));
+    b.classList.toggle('active', ['voice','text','visits','fu'][i]===name));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   currentTab = name;
   if (name==='visits') loadMyVisits();
   if (name==='fu') loadMyFU();
-  if (name==='cal') loadCal();
-  if (name==='fb') loadFeedback();
 }
 
 // ── VOICE ─────────────────────────────────────
@@ -940,26 +850,24 @@ async function submitEntry(src) {
     const clientName = g('vf-newclient');
     if (!staffId) { showToast('Select a staff member', 'error'); return; }
     if (!clientId && !clientName) { showToast('Select or enter a client', 'error'); return; }
-    const vActionText = g('vf-action');
-    const vFollowup = g('vf-followup');
     payload = {
       staff_id: staffId,
-      visit_type: g('vf-type') || 'Visit',
+      client_id: clientId || undefined,
+      client_name: !clientId ? clientName : undefined,
+      location: g('vf-location'),
+      visit_type: g('vf-type'),
+      rep_met: g('vf-repmet'),
+      time_in: g('vf-tin'),
+      time_out: g('vf-tout'),
+      purpose: g('vf-purpose'),
+      prev_visit_summary: g('vf-prev'),
+      action_items: g('vf-action') ? [g('vf-action')] : [],
+      help_needed: g('vf-help'),
+      follow_up_date: g('vf-followup'),
       priority: g('vf-priority') || 'Medium',
+      notes: g('vf-notes'),
       source: 'voice',
     };
-    if (clientId) payload.client_id = clientId;
-    else payload.client_name = clientName;
-    if (g('vf-location')) payload.location = g('vf-location');
-    if (g('vf-repmet'))   payload.rep_met = g('vf-repmet');
-    if (g('vf-tin'))      payload.time_in = g('vf-tin');
-    if (g('vf-tout'))     payload.time_out = g('vf-tout');
-    if (g('vf-purpose'))  payload.purpose = g('vf-purpose');
-    if (g('vf-prev'))     payload.prev_visit_summary = g('vf-prev');
-    if (g('vf-help'))     payload.help_needed = g('vf-help');
-    if (g('vf-notes'))    payload.notes = g('vf-notes');
-    payload.action_items = vActionText ? [vActionText] : [];
-    if (vFollowup)        payload.follow_up_date = vFollowup;
   } else {
     const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
     const staffId = g('f-staff');
@@ -967,33 +875,30 @@ async function submitEntry(src) {
     const newClient = g('f-newclient');
     if (!staffId) { showToast('Select a staff member', 'error'); return; }
     if (!clientId && !newClient) { showToast('Select or enter a client', 'error'); return; }
-    const actionText = g('f-action');
-    const followupVal = g('f-followup');
     payload = {
       staff_id: staffId,
-      visit_date: g('f-date') || new Date().toISOString().slice(0,10),
-      visit_type: g('f-type') || 'Visit',
+      client_id: clientId || undefined,
+      client_name: !clientId ? newClient : undefined,
+      visit_date: g('f-date'),
+      visit_type: g('f-type'),
+      rep_met: g('f-rep'),
+      location: g('f-location'),
+      time_in: g('f-tin'),
+      time_out: g('f-tout'),
+      purpose: g('f-purpose'),
+      prev_visit_summary: g('f-prev'),
+      action_items: g('f-action') ? [g('f-action')] : [],
+      help_needed: g('f-help'),
+      follow_up_date: g('f-followup'),
       priority: g('f-priority') || 'Medium',
+      notes: g('f-notes'),
       source: 'text',
     };
-    if (clientId) payload.client_id = clientId;
-    else payload.client_name = newClient;
-    if (g('f-rep'))      payload.rep_met = g('f-rep');
-    if (g('f-location')) payload.location = g('f-location');
-    if (g('f-tin'))      payload.time_in = g('f-tin');
-    if (g('f-tout'))     payload.time_out = g('f-tout');
-    if (g('f-purpose'))  payload.purpose = g('f-purpose');
-    if (g('f-prev'))     payload.prev_visit_summary = g('f-prev');
-    if (g('f-help'))     payload.help_needed = g('f-help');
-    if (g('f-notes'))    payload.notes = g('f-notes');
-    payload.action_items = actionText ? [actionText] : [];
-    if (followupVal)     payload.follow_up_date = followupVal;
   }
 
   if (gpsCoords) {
     payload.gps_lat = gpsCoords.lat;
     payload.gps_lng = gpsCoords.lng;
-    if (gpsCoords.address) payload.location = payload.location || gpsCoords.address;
   }
 
   // Clean undefined
@@ -1018,23 +923,18 @@ async function postVisit(payload) {
     return true;
   }
   try {
-    const url = API+'/visits/';
-    console.log('POST', url, JSON.stringify(payload).slice(0,200));
-    const r = await fetch(url, {
+    const r = await fetch(API+'/visits/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const txt = await r.text();
-    console.log('Response', r.status, txt.slice(0,200));
     if (r.ok) return true;
-    showToast('Error ' + r.status + ': ' + txt.slice(0,80), 'error');
+    showToast('Save failed — check connection', 'error');
     return false;
   } catch(e) {
-    console.error('Fetch error:', e);
-    showToast('Network error: ' + e.message, 'error');
     offlineQueue.push({ payload, timestamp: new Date().toISOString() });
     localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+    showToast('Saved offline — will sync', 'success');
     return true;
   }
 }
@@ -1139,188 +1039,6 @@ function showToast(msg, type='') {
   t.className = 'toast show' + (type?' '+type:'');
   setTimeout(() => t.className='toast', 2800);
 }
-
-// ── STAFF CALENDAR ───────────────────────────
-let calYear = new Date().getFullYear();
-let calMonth = new Date().getMonth();
-let calVisits = [], calFU = [];
-
-function calToday() {
-  calYear = new Date().getFullYear();
-  calMonth = new Date().getMonth();
-  loadCal();
-}
-
-function calChangeMonth(d) {
-  calMonth += d;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  loadCal();
-  document.getElementById('calDayPanel').innerHTML = '';
-}
-
-async function loadCal() {
-  const staffId = selectedStaffId || (staffList[0]?.id);
-  if (!staffId) return;
-
-  const months = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  document.getElementById('calMonthLabel').textContent = months[calMonth] + ' ' + calYear;
-
-  const mm   = String(calMonth+1).padStart(2,'0');
-  const from = `${calYear}-${mm}-01`;
-  const to   = `${calYear}-${mm}-31`;
-
-  const [visits, fu] = await Promise.all([
-    api(`/visits/?staff_id=${staffId}&from=${from}&to=${to}`),
-    api(`/follow-ups/?staff_id=${staffId}&from=${from}&to=${to}`)
-  ]);
-
-  calVisits = visits || [];
-  calFU     = fu || [];
-
-  renderCalGrid();
-}
-
-function renderCalGrid() {
-  const grid  = document.getElementById('calGrid');
-  const today = new Date();
-  const first = new Date(calYear, calMonth, 1).getDay();
-  const days  = new Date(calYear, calMonth+1, 0).getDate();
-
-  let html = '';
-
-  // Empty cells
-  for (let i=0; i<first; i++) {
-    html += '<div style="min-height:52px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg);opacity:0.4;"></div>';
-  }
-
-  for (let d=1; d<=days; d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
-    const dayVisits = calVisits.filter(v => v.visit_date === ds);
-    const dayFU     = calFU.filter(f => f.due_date === ds);
-    const hasItems  = dayVisits.length || dayFU.length;
-
-    html += `<div onclick="showCalDay('${ds}')" style="min-height:52px;padding:4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;background:${isToday?'var(--green-lt)':'var(--surface)'};${hasItems?'':''}">`;
-    html += `<div style="font-size:11px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--green)':'var(--text)'};margin-bottom:2px;">${d}</div>`;
-    dayVisits.slice(0,2).forEach(v => {
-      html += `<div style="font-size:9px;background:var(--blue-lt);color:var(--blue);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${(v.client_name||'').slice(0,10)}</div>`;
-    });
-    dayFU.slice(0,1).forEach(f => {
-      html += `<div style="font-size:9px;background:var(--red-lt);color:var(--red);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">↻ ${(f.client_name||'').slice(0,8)}</div>`;
-    });
-    html += '</div>';
-  }
-
-  grid.innerHTML = html;
-}
-
-function showCalDay(ds) {
-  const dayVisits = calVisits.filter(v => v.visit_date === ds);
-  const dayFU     = calFU.filter(f => f.due_date === ds);
-  const panel     = document.getElementById('calDayPanel');
-
-  if (!dayVisits.length && !dayFU.length) { panel.innerHTML = ''; return; }
-
-  const d = new Date(ds+'T00:00:00');
-  const label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-
-  let html = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
-    <div style="padding:10px 14px;background:var(--bg);font-weight:600;font-size:13px;border-bottom:1px solid var(--border);">${label}</div>`;
-
-  dayVisits.forEach(v => {
-    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div style="font-weight:500;font-size:13px;">${v.client_name||'—'}</div>
-        <div style="font-size:11px;color:var(--text2);">${v.time_in||''}${v.time_in&&v.time_out?' – ':''}${v.time_out||''}</div>
-      </div>
-      <div style="font-size:12px;color:var(--text2);">${v.visit_type} ${v.rep_met?'· '+v.rep_met:''}</div>
-      ${v.purpose?`<div style="font-size:12px;color:var(--text2);margin-top:3px;">${v.purpose.slice(0,100)}</div>`:''}
-    </div>`;
-  });
-
-  dayFU.forEach(f => {
-    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--red-lt);">
-      <div style="font-weight:500;font-size:13px;color:var(--red);">↻ Follow-up: ${f.client_name}</div>
-      ${f.notes?`<div style="font-size:12px;color:var(--red);margin-top:3px;opacity:0.8;">${f.notes}</div>`:''}
-    </div>`;
-  });
-
-  html += '</div>';
-  panel.innerHTML = html;
-}
-
-
-// ── FEEDBACK INBOX ────────────────────────────
-async function loadFeedback() {
-  const staffId = selectedStaffId || staffList[0]?.id;
-  if (!staffId) { document.getElementById('fbInbox').innerHTML='<div class="empty">Select your name first</div>'; return; }
-
-  const data = await api('/feedback/staff/'+staffId+'/');
-  const el = document.getElementById('fbInbox');
-
-  if (!data || !data.length) {
-    el.innerHTML='<div class="empty">No feedback yet</div>';
-    return;
-  }
-
-  const typeColors = {
-    great_job: {bg:'#eaf3de',color:'#3b6d11'},
-    well_done: {bg:'#eaf3de',color:'#3b6d11'},
-    good_effort: {bg:'#eaf3de',color:'#3b6d11'},
-    needs_followup: {bg:'#faeeda',color:'#854f0b'},
-    improve_notes: {bg:'#faeeda',color:'#854f0b'},
-    improve_coverage: {bg:'#faeeda',color:'#854f0b'},
-    pricing_support: {bg:'var(--blue-lt)',color:'var(--blue)'},
-    escalating: {bg:'var(--red-lt)',color:'var(--red)'},
-    custom: {bg:'var(--bg)',color:'var(--text2)'},
-  };
-
-  el.innerHTML = data.map(f => {
-    const col = typeColors[f.ftype] || {bg:'var(--bg)',color:'var(--text2)'};
-    return `<div class="visit-item" style="${!f.is_read?'border-left:3px solid var(--green);':''}" onclick="markRead('${f.id}',this)">
-      <div class="vi-head">
-        <div>
-          <div style="font-size:13px;font-weight:600;padding:4px 10px;border-radius:20px;display:inline-block;background:${col.bg};color:${col.color};margin-bottom:4px;">${f.label}</div>
-          <div class="vi-meta">From: ${f.from_name||'Manager'} · ${new Date(f.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
-        </div>
-        ${!f.is_read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px;"></div>':''}
-      </div>
-      ${f.message?`<div class="vi-detail" style="margin-top:6px;font-style:italic;">"${f.message}"</div>`:''}
-    </div>`;
-  }).join('');
-
-  // Update badge
-  const unread = data.filter(f=>!f.is_read).length;
-  document.getElementById('fbNavBadge').innerHTML = unread ? `<span class="nav-badge">${unread}</span>` : '';
-}
-
-async function markRead(fbId, el) {
-  await fetch(`${API}/feedback/${fbId}/read/`, { method: 'PATCH' });
-  el.style.borderLeft = '';
-  el.querySelector('[style*="border-radius:50%"]')?.remove();
-  loadFeedbackBadge();
-}
-
-async function markAllRead() {
-  const staffId = selectedStaffId || staffList[0]?.id;
-  if (!staffId) return;
-  await fetch(`${API}/feedback/staff/${staffId}/read-all/`, { method: 'PATCH' });
-  loadFeedback();
-}
-
-async function loadFeedbackBadge() {
-  const staffId = selectedStaffId || staffList[0]?.id;
-  if (!staffId) return;
-  const data = await api('/feedback/staff/'+staffId+'/unread-count/');
-  if (data && data.count > 0) {
-    document.getElementById('fbNavBadge').innerHTML = `<span class="nav-badge">${data.count}</span>`;
-  } else {
-    document.getElementById('fbNavBadge').innerHTML = '';
-  }
-}
-
 </script>
 </body>
 </html>
