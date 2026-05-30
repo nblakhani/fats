@@ -479,6 +479,11 @@ tr:hover td { background: var(--surface2); }
         EOD Report
       </div>
     </nav>
+      <div class="nav-section">Admin</div>
+      <div class="nav-item" onclick="switchTab('admin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><line x1="19" y1="3" x2="19" y2="9"/><line x1="22" y1="6" x2="16" y2="6"/></svg>
+        Master Data
+      </div>
     <div class="sidebar-footer">
       Connected to localhost:5000
     </div>
@@ -647,6 +652,97 @@ tr:hover td { background: var(--surface2); }
         <div id="eodContent"><div class="empty">Select a date and click Generate report</div></div>
       </div>
 
+
+      <!-- ADMIN TAB -->
+      <div id="tab-admin" class="section">
+
+        <!-- STAFF MANAGEMENT -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-head">
+            <span class="card-title">Staff</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddStaff()">+ Add Staff</button>
+          </div>
+          <div class="card-body" id="adminStaffList"><div class="loading"><span class="spinner"></span></div></div>
+        </div>
+
+        <!-- CLIENT MANAGEMENT -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-head">
+            <span class="card-title">Clients</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddClient()">+ Add Client</button>
+          </div>
+          <div style="padding:10px 14px;">
+            <input type="text" id="clientSearchAdmin" placeholder="Search clients…" oninput="loadAdminClients()" style="width:100%;font-size:13px;margin-bottom:10px;">
+          </div>
+          <div class="card-body" id="adminClientList"><div class="loading"><span class="spinner"></span></div></div>
+        </div>
+
+      </div>
+
+      <!-- ADD/EDIT STAFF MODAL -->
+      <div id="staffModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+          <div style="font-size:15px;font-weight:600;margin-bottom:14px;" id="staffModalTitle">Add Staff</div>
+          <input type="hidden" id="sm-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Name *</div><input type="text" id="sm-name" placeholder="Full name" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Phone *</div><input type="text" id="sm-phone" placeholder="Mobile number" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Email</div><input type="text" id="sm-email" placeholder="Email" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Role</div>
+              <select id="sm-role" style="width:100%;font-size:13px;"><option value="field_staff">Field Staff</option><option value="manager">Manager</option><option value="admin">Admin</option></select>
+            </div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Region</div><input type="text" id="sm-region" placeholder="e.g. Jamshedpur" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Primary LOB</div>
+              <select id="sm-lob" style="width:100%;font-size:13px;">
+                <option value="">Select LOB</option>
+                <option>Compressed Air</option><option>Power Technique</option>
+                <option>Mining Equipment</option><option>Industrial Bearings</option>
+                <option>Office Automation</option><option>Motors & Fans</option>
+                <option>Material Handling</option><option>Printing</option>
+                <option>Computers & IT</option>
+              </select>
+            </div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Manager</div>
+              <select id="sm-manager" style="width:100%;font-size:13px;"><option value="">None</option></select>
+            </div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Active</div>
+              <select id="sm-active" style="width:100%;font-size:13px;"><option value="true">Active</option><option value="false">Inactive</option></select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-primary" onclick="saveStaff()" style="flex:1;">Save</button>
+            <button class="btn" onclick="closeStaffModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD/EDIT CLIENT MODAL -->
+      <div id="clientModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:var(--surface);border-radius:var(--radius);padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;">
+          <div style="font-size:15px;font-weight:600;margin-bottom:14px;" id="clientModalTitle">Add Client</div>
+          <input type="hidden" id="cm-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="grid-column:1/-1;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Company name *</div><input type="text" id="cm-name" placeholder="Company name" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Industry</div><input type="text" id="cm-industry" placeholder="e.g. Steel" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">City</div><input type="text" id="cm-city" placeholder="City" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact name</div><input type="text" id="cm-contact" placeholder="Contact person" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact phone</div><input type="text" id="cm-phone" placeholder="Phone" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Contact email</div><input type="text" id="cm-email" placeholder="Email" style="width:100%;font-size:13px;"></div>
+            <div><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Account tier</div>
+              <select id="cm-tier" style="width:100%;font-size:13px;">
+                <option value="hot">Hot</option><option value="warm">Warm</option>
+                <option value="standard" selected>Standard</option><option value="prospect">Prospect</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:10px;"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Notes</div><textarea id="cm-notes" style="width:100%;font-size:13px;min-height:60px;"></textarea></div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-primary" onclick="saveClient()" style="flex:1;">Save</button>
+            <button class="btn" onclick="closeClientModal()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /shell -->
@@ -689,6 +785,7 @@ function loadTab(name) {
   else if (name==='clients') loadClients();
   else if (name==='calendar') loadCalendar();
   else if (name==='eod') { document.getElementById('eodDate').value = TODAY; }
+  else if (name==='admin') { loadAdminStaff(); loadAdminClients(); }
   setRefreshTime();
 }
 
@@ -1277,6 +1374,168 @@ function showFbToast(msg) {
 document.getElementById('feedbackModal').addEventListener('click', function(e) {
   if (e.target === this) closeFeedback();
 });
+
+
+// ── ADMIN — MASTER DATA MANAGEMENT ───────────
+async function loadAdminStaff() {
+  const data = await api('/staff/');
+  const el = document.getElementById('adminStaffList');
+  if (!data) { el.innerHTML='<div class="empty">Cannot load staff</div>'; return; }
+
+  // Populate manager dropdown
+  const managers = data.filter(s => s.role === 'manager');
+  document.getElementById('sm-manager').innerHTML =
+    '<option value="">None</option>' +
+    managers.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  const roleClass = r => r==='manager'?'badge-blue':r==='admin'?'badge-red':'badge-gray';
+  el.innerHTML = `<table><thead><tr>
+    <th>Name</th><th>Role</th><th>Region</th><th>LOB</th><th>Phone</th><th>Status</th><th></th>
+  </tr></thead><tbody>` +
+  data.map(s => `<tr>
+    <td><strong>${s.name}</strong></td>
+    <td>${badge(s.role, roleClass(s.role))}</td>
+    <td>${s.region||'—'}</td>
+    <td>${s.lob ? badge(s.lob,'b-purple') : '—'}</td>
+    <td>${s.phone}</td>
+    <td>${badge(s.active?'Active':'Inactive', s.active?'badge-green':'badge-red')}</td>
+    <td><button class="btn btn-sm" onclick="editStaff(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button></td>
+  </tr>`).join('') + '</tbody></table>';
+}
+
+function showAddStaff() {
+  document.getElementById('staffModalTitle').textContent = 'Add Staff';
+  document.getElementById('sm-id').value = '';
+  ['sm-name','sm-phone','sm-email','sm-region'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sm-role').value = 'field_staff';
+  document.getElementById('sm-active').value = 'true';
+  document.getElementById('sm-lob').value = '';
+  document.getElementById('sm-manager').value = '';
+  document.getElementById('staffModal').style.display = 'flex';
+}
+
+function editStaff(s) {
+  document.getElementById('staffModalTitle').textContent = 'Edit Staff';
+  document.getElementById('sm-id').value = s.id;
+  document.getElementById('sm-name').value = s.name || '';
+  document.getElementById('sm-phone').value = s.phone || '';
+  document.getElementById('sm-email').value = s.email || '';
+  document.getElementById('sm-region').value = s.region || '';
+  document.getElementById('sm-role').value = s.role || 'field_staff';
+  document.getElementById('sm-lob').value = s.lob || '';
+  document.getElementById('sm-manager').value = s.manager_id || '';
+  document.getElementById('sm-active').value = s.active ? 'true' : 'false';
+  document.getElementById('staffModal').style.display = 'flex';
+}
+
+function closeStaffModal() {
+  document.getElementById('staffModal').style.display = 'none';
+}
+
+async function saveStaff() {
+  const id = document.getElementById('sm-id').value;
+  const payload = {
+    name:       document.getElementById('sm-name').value.trim(),
+    phone:      document.getElementById('sm-phone').value.trim(),
+    email:      document.getElementById('sm-email').value.trim() || null,
+    role:       document.getElementById('sm-role').value,
+    region:     document.getElementById('sm-region').value.trim() || null,
+    lob:        document.getElementById('sm-lob').value || null,
+    manager_id: document.getElementById('sm-manager').value || null,
+    active:     document.getElementById('sm-active').value === 'true',
+  };
+  if (!payload.name || !payload.phone) { alert('Name and phone are required'); return; }
+
+  const url = id ? `${API}/staff/${id}/` : `${API}/staff/`;
+  const method = id ? 'PATCH' : 'POST';
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if (r.ok) {
+    closeStaffModal();
+    loadAdminStaff();
+    loadStaff(); // refresh staff filter
+    showFbToast(id ? 'Staff updated' : 'Staff added');
+  } else {
+    const err = await r.json();
+    alert('Error: ' + (err.error || 'Save failed'));
+  }
+}
+
+// ── CLIENT ADMIN ──────────────────────────────
+async function loadAdminClients() {
+  const q = document.getElementById('clientSearchAdmin')?.value || '';
+  const data = await api('/clients/?' + (q ? 'q='+encodeURIComponent(q) : ''));
+  const el = document.getElementById('adminClientList');
+  if (!data) { el.innerHTML='<div class="empty">Cannot load clients</div>'; return; }
+
+  const tierClass = t => ({hot:'badge-red',warm:'badge-amber',standard:'badge-blue',prospect:'badge-green'}[t]||'badge-gray');
+  el.innerHTML = `<table><thead><tr>
+    <th>Company</th><th>Industry</th><th>City</th><th>Contact</th><th>Tier</th><th></th>
+  </tr></thead><tbody>` +
+  data.map(c => `<tr>
+    <td><strong>${c.company_name}</strong></td>
+    <td>${c.industry||'—'}</td>
+    <td>${c.city||'—'}</td>
+    <td>${c.contact_name||'—'}<br><span style="font-size:11px;color:var(--text3);">${c.contact_phone||''}</span></td>
+    <td>${badge(c.account_tier||'standard', tierClass(c.account_tier))}</td>
+    <td><button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button></td>
+  </tr>`).join('') + '</tbody></table>';
+}
+
+function showAddClient() {
+  document.getElementById('clientModalTitle').textContent = 'Add Client';
+  document.getElementById('cm-id').value = '';
+  ['cm-name','cm-industry','cm-city','cm-contact','cm-phone','cm-email','cm-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cm-tier').value = 'standard';
+  document.getElementById('clientModal').style.display = 'flex';
+}
+
+function editClient(c) {
+  document.getElementById('clientModalTitle').textContent = 'Edit Client';
+  document.getElementById('cm-id').value = c.id;
+  document.getElementById('cm-name').value = c.company_name || '';
+  document.getElementById('cm-industry').value = c.industry || '';
+  document.getElementById('cm-city').value = c.city || '';
+  document.getElementById('cm-contact').value = c.contact_name || '';
+  document.getElementById('cm-phone').value = c.contact_phone || '';
+  document.getElementById('cm-email').value = c.contact_email || '';
+  document.getElementById('cm-tier').value = c.account_tier || 'standard';
+  document.getElementById('cm-notes').value = c.notes || '';
+  document.getElementById('clientModal').style.display = 'flex';
+}
+
+function closeClientModal() {
+  document.getElementById('clientModal').style.display = 'none';
+}
+
+async function saveClient() {
+  const id = document.getElementById('cm-id').value;
+  const payload = {
+    company_name:  document.getElementById('cm-name').value.trim(),
+    industry:      document.getElementById('cm-industry').value.trim() || null,
+    city:          document.getElementById('cm-city').value.trim() || null,
+    contact_name:  document.getElementById('cm-contact').value.trim() || null,
+    contact_phone: document.getElementById('cm-phone').value.trim() || null,
+    contact_email: document.getElementById('cm-email').value.trim() || null,
+    account_tier:  document.getElementById('cm-tier').value,
+    notes:         document.getElementById('cm-notes').value.trim() || null,
+  };
+  if (!payload.company_name) { alert('Company name is required'); return; }
+
+  const url = id ? `${API}/clients/${id}/` : `${API}/clients/`;
+  const method = id ? 'PATCH' : 'POST';
+  const r = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  if (r.ok) {
+    closeClientModal();
+    loadAdminClients();
+    showFbToast(id ? 'Client updated' : 'Client added');
+  } else {
+    alert('Save failed');
+  }
+}
+
+// Close modals on backdrop click
+document.getElementById('staffModal').addEventListener('click', e => { if(e.target===document.getElementById('staffModal')) closeStaffModal(); });
+document.getElementById('clientModal').addEventListener('click', e => { if(e.target===document.getElementById('clientModal')) closeClientModal(); });
 
 </script>
 

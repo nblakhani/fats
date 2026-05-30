@@ -131,6 +131,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .field { margin-bottom: 12px; }
 .field-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
 .field-label .req { color: var(--red); }
+input[type=text]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus {
+  border-color: var(--green) !important;
+}
 input[type=text], input[type=date], input[type=time], select, textarea {
   width: 100%;
   padding: 10px 12px;
@@ -351,6 +354,23 @@ textarea { min-height: 72px; resize: vertical; }
   margin: 0 auto 4px;
 }
 .staff-btn.selected .staff-initial { background: var(--green); color: #fff; }
+
+/* VALIDATION */
+.field-error { border-color: var(--red) !important; }
+.field-error-msg { font-size: 11px; color: var(--red); margin-top: 3px; display: none; }
+.field-error-msg.show { display: block; }
+.required-star { color: var(--red); margin-left: 2px; }
+.validation-banner {
+  background: var(--red-lt);
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 12px;
+  display: none;
+}
+.validation-banner.show { display: block; }
 </style>
 </head>
 <body>
@@ -434,6 +454,7 @@ textarea { min-height: 72px; resize: vertical; }
   <!-- TEXT LOG -->
   <div id="tab-text" class="section">
     <div class="section-title">Log a visit</div>
+    <div class="validation-banner" id="textValidationBanner"></div>
 
     <div id="gpsBarText" class="gps-bar" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -446,7 +467,7 @@ textarea { min-height: 72px; resize: vertical; }
       <div class="card-body">
         <div class="field">
           <div class="field-label">Staff name <span class="req">*</span></div>
-          <select id="f-staff"><option value="">Select staff member</option></select>
+          <select id="f-staff" onchange="clearFieldError('f-staff')"><option value="">Select staff member</option></select>
         </div>
         <div class="row2">
           <div class="field">
@@ -461,7 +482,7 @@ textarea { min-height: 72px; resize: vertical; }
 
         <div class="field">
           <div class="field-label">Client / company <span class="req">*</span></div>
-          <select id="f-client"><option value="">Select or type below</option></select>
+          <select id="f-client" onchange="clearFieldError('f-client')"><option value="">Select or type below</option></select>
         </div>
         <div class="field">
           <div class="field-label">New client (if not in list)</div>
@@ -477,16 +498,16 @@ textarea { min-height: 72px; resize: vertical; }
           <input type="text" id="f-location" placeholder="e.g. Bistupur, Jamshedpur">
         </div>
         <div class="field">
-          <div class="field-label">Visit type</div>
-          <select id="f-type">
+          <div class="field-label">Visit type <span class="required-star">*</span></div>
+          <select id="f-type" onchange="clearFieldError('f-type')">
             <option>Follow-up</option><option>Sales call</option><option>Prospecting</option>
             <option>Service visit</option><option>Demo</option><option>Collection</option>
             <option>Delivery</option><option>Complaint</option>
           </select>
         </div>
         <div class="field">
-          <div class="field-label">Line of Business (LOB)</div>
-          <select id="f-lob">
+          <div class="field-label">Line of Business (LOB) <span class="required-star">*</span></div>
+          <select id="f-lob" onchange="clearFieldError('f-lob')">
             <option value="">Select LOB</option>
             <option>Compressed Air</option>
             <option>Power Technique</option>
@@ -500,12 +521,12 @@ textarea { min-height: 72px; resize: vertical; }
           </select>
         </div>
         <div class="row2">
-          <div class="field"><div class="field-label">Time in</div><input type="time" id="f-tin"></div>
+          <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="time" id="f-tin" onchange="clearFieldError('f-tin')"></div>
           <div class="field"><div class="field-label">Time out</div><input type="time" id="f-tout"></div>
         </div>
         <div class="field">
-          <div class="field-label">Main purpose / issue</div>
-          <textarea id="f-purpose" placeholder="Why did you visit?"></textarea>
+          <div class="field-label">Main purpose / issue <span class="required-star">*</span></div>
+          <textarea id="f-purpose" oninput="clearFieldError('f-purpose')" placeholder="Why did you visit?"></textarea>
         </div>
         <div class="field">
           <div class="field-label">Previous visit summary</div>
@@ -957,8 +978,20 @@ async function submitEntry(src) {
     const staffId = g('vf-staff') || selectedStaffId;
     const clientId = g('vf-client');
     const clientName = g('vf-newclient');
-    if (!staffId) { showToast('Select a staff member', 'error'); return; }
-    if (!clientId && !clientName) { showToast('Select or enter a client', 'error'); return; }
+
+    // Voice validation
+    const voiceErrors = [];
+    if (!staffId) voiceErrors.push('Staff name is required');
+    if (!clientId && !clientName) voiceErrors.push('Client name is required');
+    if (!g('vf-type')) voiceErrors.push('Visit type is required');
+    if (!g('vf-lob')) voiceErrors.push('Line of Business (LOB) is required');
+    if (!g('vf-purpose')) voiceErrors.push('Purpose / main issue is required');
+    if (!g('vf-tin')) voiceErrors.push('Time in is required');
+
+    if (voiceErrors.length) {
+      showToast(voiceErrors[0], 'error');
+      return;
+    }
     const vActionText = g('vf-action');
     const vFollowup = g('vf-followup');
     payload = {
@@ -985,8 +1018,37 @@ async function submitEntry(src) {
     const staffId = g('f-staff');
     const clientId = g('f-client');
     const newClient = g('f-newclient');
-    if (!staffId) { showToast('Select a staff member', 'error'); return; }
-    if (!clientId && !newClient) { showToast('Select or enter a client', 'error'); return; }
+
+    // Text form validation
+    const errors = [];
+    const errorFields = [];
+    if (!staffId) { errors.push('Staff name'); errorFields.push('f-staff'); }
+    if (!clientId && !newClient) { errors.push('Client'); errorFields.push('f-client'); }
+    if (!g('f-type')) { errors.push('Visit type'); errorFields.push('f-type'); }
+    if (!g('f-lob')) { errors.push('Line of Business (LOB)'); errorFields.push('f-lob'); }
+    if (!g('f-purpose')) { errors.push('Purpose / main issue'); errorFields.push('f-purpose'); }
+    if (!g('f-tin')) { errors.push('Time in'); errorFields.push('f-tin'); }
+
+    // Clear previous errors
+    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+
+    if (errors.length) {
+      // Highlight error fields
+      errorFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('field-error');
+      });
+      // Show banner
+      const banner = document.getElementById('textValidationBanner');
+      banner.innerHTML = '⚠ Please fill in: <strong>' + errors.join(', ') + '</strong>';
+      banner.classList.add('show');
+      // Scroll to top of form
+      banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    // Clear banner if valid
+    document.getElementById('textValidationBanner').classList.remove('show');
     const actionText = g('f-action');
     const followupVal = g('f-followup');
     payload = {
@@ -1076,6 +1138,13 @@ async function syncOfflineQueue() {
   }
   localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
   if (synced > 0) showToast(`${synced} offline visit(s) synced`, 'success');
+}
+
+// Clear error highlight when user starts typing/selecting
+function clearFieldError(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('field-error');
+  document.getElementById('textValidationBanner')?.classList.remove('show');
 }
 
 function clearTextForm() {
