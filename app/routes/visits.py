@@ -100,6 +100,10 @@ def create_visit():
     )
     db.session.add(visit)
     db.session.flush()
+    try:
+        visit.lob = data.get('lob') or None
+    except Exception:
+        pass
 
     # Action items
     for item_text in (data.get("action_items") or []):

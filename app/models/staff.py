@@ -32,7 +32,7 @@ class Staff(db.Model):
             "role":       self.role,
             "region":     self.region,
             "manager_id": self.manager_id,
-            "lob":        self.lob,
+            "lob":        getattr(self, "lob", None),
             "active":     self.active,
             "created_at": self.created_at.isoformat(),
         }
