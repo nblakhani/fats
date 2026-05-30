@@ -364,6 +364,69 @@ tr:hover td { background: var(--surface2); }
 .fb-btn.coaching.selected { background: #faeeda; border-color: #854f0b; color: #854f0b; }
 .fb-btn.support:hover { background: var(--blue-light); border-color: var(--blue); }
 .fb-btn.support.selected { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+/* AI FEATURES */
+.ai-score-btn {
+  background: linear-gradient(135deg, #1a472a, #2d6a4f);
+  color: #fff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s;
+}
+.ai-score-btn:hover { opacity: 0.85; }
+.ai-score-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.ai-score-panel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+.ai-score-num {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: "DM Mono", monospace;
+}
+.score-high  { color: #3b6d11; }
+.score-mid   { color: #854f0b; }
+.score-low   { color: #a32d2d; }
+
+.ai-intel-btn {
+  background: var(--blue-light);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.ai-intel-btn:hover { opacity: 0.8; }
+.ai-intel-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.ai-intel-panel {
+  background: var(--blue-light);
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 10px;
+  color: var(--blue);
+}
+.ai-intel-panel strong { color: var(--text); }
+
 .report-text {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1024,11 +1087,15 @@ function visitCard(v) {
       ${v.action_items&&v.action_items.length?`<div class="detail-row"><div class="detail-key">Action items</div><div class="detail-val action">${v.action_items.map(a=>a.description).join('<br>')}</div></div>`:''}
       ${v.notes?`<div class="detail-row"><div class="detail-key">Notes</div><div class="detail-val">${v.notes}</div></div>`:''}
       ${v.follow_ups&&v.follow_ups.length?`<div class="detail-row"><div class="detail-key">Follow-up</div><div class="detail-val fu">${v.follow_ups.map(f=>fmtDate(f.due_date)).join(', ')}</div></div>`:''}
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-sm" onclick="openFeedback('${v.id}','${v.staff_id}','${v.staff_name||''}','${v.client_name||''}')" style="font-size:11px;">
-          💬 Send feedback to ${v.staff_name||'staff'}
+          💬 Send feedback
+        </button>
+        <button class="ai-score-btn" id="score-btn-${v.id}" onclick="scoreVisit('${v.id}',this)">
+          ✦ AI Score
         </button>
       </div>
+      <div id="score-panel-${v.id}" style="display:none;" class="ai-score-panel"></div>
     </div>
   </div>`;
 }
@@ -1536,7 +1603,10 @@ async function loadAdminClients() {
     <td>${c.contact_name||'—'}<br><span style="font-size:11px;color:var(--text3);">${c.contact_phone||''}</span></td>
     <td>${badge(c.account_tier||'standard', tierClass(c.account_tier))}</td>
     <td>${c.rating ? '⭐'.repeat(c.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(c.rating_comment||'').slice(0,25)}</span></td>
-    <td><button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button></td>
+    <td style="white-space:nowrap;">
+      <button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button>
+      <button class="ai-intel-btn" style="margin-left:4px;padding:3px 8px;font-size:11px;" onclick="clientIntel('${c.id}','${c.company_name}',this)">✦ Intel</button>
+    </td>
   </tr>`).join('') + '</tbody></table>';
 }
 
@@ -1623,6 +1693,179 @@ async function saveClient() {
 // Close modals on backdrop click
 document.getElementById('staffModal').addEventListener('click', e => { if(e.target===document.getElementById('staffModal')) closeStaffModal(); });
 document.getElementById('clientModal').addEventListener('click', e => { if(e.target===document.getElementById('clientModal')) closeClientModal(); });
+
+
+// ── AI FEATURES ───────────────────────────────
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+
+async function callClaude(system, user) {
+  const r = await fetch(CLAUDE_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: 1000,
+      system,
+      messages: [{ role: 'user', content: user }]
+    })
+  });
+  const d = await r.json();
+  return d.content?.[0]?.text || '';
+}
+
+// ── VISIT QUALITY SCORER ──────────────────────
+const SCORE_SYSTEM = `You are a field sales manager at Apex Corporation India, an industrial equipment company.
+Score a field visit log on quality out of 10. Be honest and direct.
+
+Scoring criteria:
+- Purpose (2pts): Is it specific with product/quantity/context?
+- Previous visit summary (2pts): Does it provide continuity from last visit?
+- Action items (2pts): Are they specific, actionable, with clear next steps?
+- Rep met (1pt): Is the contact name and designation recorded?
+- Time tracking (1pt): Are time in and time out recorded?
+- Notes/outcome (2pts): Do they capture client sentiment, competitive intel, or key observations?
+
+Respond ONLY in this JSON format, no markdown:
+{
+  "score": <number 1-10>,
+  "verdict": "<one line summary>",
+  "strengths": ["<point>", "<point>"],
+  "improvements": ["<specific suggestion>", "<specific suggestion>"],
+  "missing": ["<field or info missing>"]
+}`;
+
+async function scoreVisit(visitId, btn) {
+  // Fetch full visit details
+  const panel = document.getElementById('score-panel-' + visitId);
+  btn.disabled = true;
+  btn.textContent = '⟳ Scoring…';
+  panel.style.display = 'block';
+  panel.innerHTML = '<span class="spinner"></span> AI is reviewing this visit…';
+
+  try {
+    const vResp = await fetch(API + '/visits/' + visitId + '/');
+    const v = await vResp.json();
+
+    const visitText = `
+Visit details:
+- Client: ${v.client_name || 'Not specified'}
+- Staff: ${v.staff_name || 'Not specified'}
+- Visit type: ${v.visit_type || 'Not specified'}
+- LOB: ${v.lob || 'Not specified'}
+- Rep met: ${v.rep_met || 'Not recorded'}
+- Time in: ${v.time_in || 'Not recorded'}
+- Time out: ${v.time_out || 'Not recorded'}
+- Purpose: ${v.purpose || 'Not recorded'}
+- Previous visit summary: ${v.prev_visit_summary || 'Not recorded'}
+- Action items: ${(v.action_items||[]).map(a=>a.description).join('; ') || 'None recorded'}
+- Help needed: ${v.action_items?.find(a=>a.help_needed)?.help_needed || 'None'}
+- Notes: ${v.notes || 'Not recorded'}
+- Follow-up date: ${v.follow_ups?.length ? v.follow_ups[0].due_date : 'Not set'}
+`;
+
+    const raw = await callClaude(SCORE_SYSTEM, visitText);
+    const result = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const score = result.score || 0;
+    const scoreClass = score >= 8 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
+
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div class="ai-score-num ${scoreClass}">${score}<span style="font-size:13px;font-weight:400;color:var(--text3)">/10</span></div>
+        <div>
+          <div style="font-weight:600;font-size:12px;">${result.verdict}</div>
+          <div style="font-size:11px;color:var(--text3);">AI visit quality score</div>
+        </div>
+      </div>
+      ${result.strengths?.length ? `
+        <div style="margin-bottom:6px;">
+          <div style="font-size:11px;font-weight:600;color:#3b6d11;margin-bottom:3px;">✓ Strengths</div>
+          ${result.strengths.map(s=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${s}</div>`).join('')}
+        </div>` : ''}
+      ${result.improvements?.length ? `
+        <div style="margin-bottom:6px;">
+          <div style="font-size:11px;font-weight:600;color:#854f0b;margin-bottom:3px;">↑ Improvements</div>
+          ${result.improvements.map(i=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${i}</div>`).join('')}
+        </div>` : ''}
+      ${result.missing?.length ? `
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#a32d2d;margin-bottom:3px;">✗ Missing</div>
+          ${result.missing.map(m=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${m}</div>`).join('')}
+        </div>` : ''}
+    `;
+    btn.textContent = '✦ Re-score';
+    btn.disabled = false;
+
+  } catch(e) {
+    panel.innerHTML = '<span style="color:var(--red);font-size:12px;">Scoring failed — ' + e.message + '</span>';
+    btn.textContent = '✦ AI Score';
+    btn.disabled = false;
+  }
+}
+
+// ── CLIENT INTELLIGENCE SUMMARY ───────────────
+const INTEL_SYSTEM = `You are a senior sales manager at Apex Corporation India, reviewing a client's complete visit history.
+Write a concise 4-sentence client intelligence summary covering:
+1. Account status and relationship strength
+2. Key products/LOBs being discussed and pipeline status
+3. Key contacts and decision makers
+4. Recommended next action
+
+Be specific — use actual product names, amounts, and dates from the data.
+Write in professional but direct language. No bullet points — flowing sentences only.`;
+
+async function clientIntel(clientId, clientName, btn) {
+  const panel = document.getElementById('clientIntelPanel');
+  btn.disabled = true;
+  btn.textContent = '⟳ Analysing…';
+  panel.style.display = 'block';
+  panel.innerHTML = '<span class="spinner"></span> AI is analysing visit history for ' + clientName + '…';
+
+  try {
+    const vResp = await fetch(API + '/clients/' + clientId + '/visits/');
+    const visits = await vResp.json();
+
+    if (!visits || visits.length === 0) {
+      panel.innerHTML = '<span style="color:var(--text3);font-size:13px;">No visit history found for this client.</span>';
+      btn.disabled = false;
+      btn.textContent = '✦ AI Intel';
+      return;
+    }
+
+    const historyText = `Client: ${clientName}
+Total visits: ${visits.length}
+
+Visit history (most recent first):
+${visits.slice(0,10).map((v,i) => `
+Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
+  Rep met: ${v.rep_met || 'Not recorded'}
+  LOB: ${v.lob || 'Not specified'}
+  Purpose: ${v.purpose || 'Not recorded'}
+  Previous summary: ${v.prev_visit_summary || 'None'}
+  Actions: ${(v.action_items||[]).map(a=>a.description).join('; ') || 'None'}
+  Notes: ${v.notes || 'None'}
+  Follow-up: ${(v.follow_ups||[]).map(f=>f.due_date).join(', ') || 'None set'}
+`).join('')}`;
+
+    const summary = await callClaude(INTEL_SYSTEM, historyText);
+
+    panel.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:700;color:var(--blue);">✦ AI Client Intelligence — ${clientName}</div>
+        <div style="font-size:10px;color:var(--text3);">Based on ${visits.length} visit${visits.length!==1?'s':''}</div>
+      </div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.replace(/
+/g,'<br>')}</div>
+    `;
+    btn.textContent = '✦ Refresh Intel';
+    btn.disabled = false;
+
+  } catch(e) {
+    panel.innerHTML = '<span style="color:var(--red);font-size:12px;">Analysis failed — ' + e.message + '</span>';
+    btn.textContent = '✦ AI Intel';
+    btn.disabled = false;
+  }
+}
 
 </script>
 
