@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_db_url():
-    url = os.environ.get("DATABASE_URL", "")
+    url =  "postgresql://postgres:qRYplPzRAIdZNmHxTRfxLlyMEacNSsXG@zephyr.proxy.rlwy.net:33883/railway"
     # Skip if empty or localhost (Railway shared variable default)
     if not url or "localhost" in url:
         url = "postgresql://postgres:qRYplPzRAIdZNmHxTRfxLlyMEacNSsXG@postgres.railway.internal:5432/railway"
