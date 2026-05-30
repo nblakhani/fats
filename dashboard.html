@@ -1382,12 +1382,14 @@ function escHtml(t) {
 }
 
 // ── INIT ─────────────────────────────────────
-loadDashboard();
-loadStaff();
+// Load only what's needed for the active tab on startup
+loadDashboard();  // home tab only
 document.getElementById('vFromDate').value = TODAY;
 document.getElementById('vToDate').value   = TODAY;
 document.getElementById('eodDate').value   = TODAY;
 setRefreshTime();
+// Defer staff list load (needed for filters) — load after 1 second
+setTimeout(loadStaff, 1000);
 
 // ── FEEDBACK SYSTEM ──────────────────────────
 let fbState = { visitId: null, staffId: null, staffName: null, selectedType: null };
