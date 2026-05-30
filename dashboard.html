@@ -1382,7 +1382,7 @@ function copyReport() {
 }
 
 function escHtml(t) {
-  return t.replace(/&/g,'&amp;').replace(/\x3c/g,'&lt;').replace(/\x3e/g,'&gt;');
+  return t.split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
 }
 
 // ── INIT ─────────────────────────────────────
@@ -1503,7 +1503,7 @@ async function loadAdminStaff() {
     <td>${s.rating ? '⭐'.repeat(s.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(s.rating_comment||'').slice(0,30)}</span></td>
     <td>${s.phone}</td>
     <td>${badge(s.active?'Active':'Inactive', s.active?'badge-green':'badge-red')}</td>
-    <td><button class="btn btn-sm" onclick="editStaff(${JSON.stringify(s).replace(/"/g,'&quot;')})">Edit</button></td>
+    <td><button class="btn btn-sm" onclick="editStaff(${JSON.stringify(s).split('"').join('&quot;')})">Edit</button></td>
   </tr>`).join('') + '</tbody></table>';
 }
 
@@ -1610,7 +1610,7 @@ async function loadAdminClients() {
     <td>${badge(c.account_tier||'standard', tierClass(c.account_tier))}</td>
     <td>${c.rating ? '⭐'.repeat(c.rating) : '—'}<br><span style='font-size:11px;color:var(--text3);'>${(c.rating_comment||'').slice(0,25)}</span></td>
     <td style="white-space:nowrap;">
-      <button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).replace(/"/g,'&quot;')})">Edit</button>
+      <button class="btn btn-sm" onclick="editClient(${JSON.stringify(c).split('"').join('&quot;')})">Edit</button>
       <button class="ai-intel-btn" style="margin-left:4px;padding:3px 8px;font-size:11px;" onclick="clientIntel('${c.id}','${c.company_name}',this)">✦ Intel</button>
     </td>
   </tr>`).join('') + '</tbody></table>';
@@ -1771,7 +1771,7 @@ Visit details:
 `;
 
     const raw = await callClaude(SCORE_SYSTEM, visitText);
-    const result = JSON.parse(raw.replace(/`{3}json|`{3}/g,'').trim());
+    const result = JSON.parse(raw.split('```json').join('').split('```').join('').trim());
     const score = result.score || 0;
     const scoreClass = score >= 8 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
 
