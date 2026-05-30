@@ -388,6 +388,18 @@ textarea { min-height: 72px; resize: vertical; }
       <div class="transcript-box" id="transcriptBox" style="display:none;"></div>
     </div>
 
+    <div id="iosBanner" style="display:none;background:#fef8ec;border:1px solid #f5c842;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#7a5800;">
+      <div style="font-weight:600;margin-bottom:4px;">Voice tip for iPhone</div>
+      <div>Safari blocks the mic button on iOS. Instead:</div>
+      <ol style="margin:6px 0 0 16px;line-height:1.8;">
+        <li>Tap the <strong>Text tab</strong> below</li>
+        <li>Tap any field (e.g. Purpose)</li>
+        <li>Tap the mic key on your iPhone keyboard</li>
+        <li>Dictate — Siri transcribes it for you</li>
+      </ol>
+      <div style="margin-top:8px;font-size:12px;color:#9a7020;">For full one-tap voice logging, use Chrome on Android.</div>
+    </div>
+
     <div id="gpsBar" class="gps-bar" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -586,6 +598,7 @@ window.addEventListener('load', async () => {
     });
   }
   checkOnline();
+  detectIOS();
   window.addEventListener('online',  () => { checkOnline(); syncOfflineQueue(); });
   window.addEventListener('offline', () => checkOnline());
   captureGPS();
@@ -600,6 +613,19 @@ function checkOnline() {
   const online = navigator.onLine;
   document.getElementById('syncDot').className = 'sync-dot' + (online ? '' : ' offline');
   document.getElementById('syncText').textContent = online ? 'Online' : 'Offline';
+}
+
+// ── IOS DETECTION ────────────────────────────
+function detectIOS() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const noSpeech = !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
+  if (isIOS || noSpeech) {
+    document.getElementById('iosBanner').style.display = 'block';
+    document.getElementById('micStatus').textContent = 'Voice not available on iPhone — see tip below';
+    document.getElementById('micBtn').style.opacity = '0.4';
+    document.getElementById('micBtn').style.pointerEvents = 'none';
+    document.getElementById('micHint').textContent = '';
+  }
 }
 
 // ── GPS ───────────────────────────────────────
@@ -622,7 +648,13 @@ function captureGPS() {
 // ── STAFF & CLIENTS ───────────────────────────
 async function loadStaff() {
   const data = await api('/staff');
-  if (!data) return;
+  if (!data) {
+    document.getElementById('staffPicker').innerHTML =
+      '<div style="color:var(--red);font-size:13px;padding:8px;">Cannot load staff — check connection</div>';
+    document.getElementById('f-staff').innerHTML =
+      '<option value="">Cannot load staff</option>';
+    return;
+  }
   staffList = data.filter(s => s.role === 'field_staff');
 
   // Staff picker (voice tab)
@@ -649,7 +681,11 @@ function selectStaff(id) {
 
 async function loadClients() {
   const data = await api('/clients');
-  if (!data) return;
+  if (!data) {
+    document.getElementById('f-client').innerHTML =
+      '<option value="">Cannot load clients</option>';
+    return;
+  }
   clientList = data;
   const sel = document.getElementById('f-client');
   sel.innerHTML = '<option value="">Select client</option>' +
@@ -975,8 +1011,19 @@ async function loadMyFU() {
 
 // ── HELPERS ───────────────────────────────────
 async function api(path) {
-  try { const r = await fetch(API+path); return await r.json(); }
-  catch(e) { return null; }
+  try {
+    const r = await fetch(API+path, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
+      mode: 'cors',
+    });
+    if (!r.ok) { console.error('API error', r.status, path); return null; }
+    return await r.json();
+  } catch(e) {
+    console.error('API fetch failed', path, e.message);
+    showToast('Cannot reach server — ' + e.message, 'error');
+    return null;
+  }
 }
 function initials(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 function fmtDate(s) {
