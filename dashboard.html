@@ -747,7 +747,7 @@ const LOB_COLORS = {
 // ── DASHBOARD ────────────────────────────────
 async function loadDashboard() {
   // LOB breakdown
-  const lobVisits = await api('/visits?from='+new Date(Date.now()-7*86400000).toISOString().slice(0,10));
+  const lobVisits = await api('/visits/?from='+new Date(Date.now()-7*86400000).toISOString().slice(0,10));
   if (lobVisits) {
     const lobCounts = {};
     lobVisits.forEach(v => {
@@ -955,7 +955,7 @@ async function loadFollowUps() {
   const data = await api('/follow-ups'+(status?'?status='+status:''));
   renderFU(data);
 }
-async function loadOverdue() { renderFU(await api('/follow-ups?overdue=true')); }
+async function loadOverdue() { renderFU(await api('/follow-ups/?overdue=true')); }
 async function loadUpcoming() { renderFU(await api('/follow-ups/upcoming?days=7')); }
 
 function renderFU(data) {
@@ -1000,7 +1000,7 @@ async function loadActions() {
 
 // ── STAFF ─────────────────────────────────────
 async function loadStaff() {
-  const data = await api('/staff');
+  const data = await api('/staff/');
   const el = document.getElementById('staffContent');
   if (!data || !data.length) { el.innerHTML='<div class="empty">No staff found</div>'; return; }
   staffList = data;
@@ -1065,8 +1065,8 @@ async function loadCalendar() {
   document.getElementById('calMonthTitle').textContent = months[calMonth]+' '+calYear;
 
   const [fuData, visitData] = await Promise.all([
-    api(`/follow-ups/calendar?year=${calYear}&month=${calMonth+1}`),
-    api(`/visits?from=${calYear}-${String(calMonth+1).padStart(2,'0')}-01&to=${calYear}-${String(calMonth+1).padStart(2,'0')}-31`)
+    api(`/follow-ups/calendar/?year=${calYear}&month=${calMonth+1}`),
+    api(`/visits/?from=${calYear}-${String(calMonth+1).padStart(2,'0')}-01&to=${calYear}-${String(calMonth+1).padStart(2,'0')}-31`)
   ]);
 
   calData = { fu: fuData||{}, visits: visitData||[] };
