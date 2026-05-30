@@ -1771,7 +1771,7 @@ Visit details:
 `;
 
     const raw = await callClaude(SCORE_SYSTEM, visitText);
-    const result = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const result = JSON.parse(raw.replace(/`{3}json|`{3}/g,'').trim());
     const score = result.score || 0;
     const scoreClass = score >= 8 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
 
@@ -1860,8 +1860,7 @@ Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
         <div style="font-size:12px;font-weight:700;color:var(--blue);">✦ AI Client Intelligence — ${clientName}</div>
         <div style="font-size:10px;color:var(--text3);">Based on ${visits.length} visit${visits.length!==1?'s':''}</div>
       </div>
-      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.replace(/
-/g,'<br>')}</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.split('\n').join('<br>')}</div>
     `;
     btn.textContent = '✦ Refresh Intel';
     btn.disabled = false;
