@@ -390,9 +390,10 @@ textarea { min-height: 72px; resize: vertical; }
 
   <!-- VOICE LOG -->
   <div id="tab-voice" class="section">
-    <div id="staffPickerWrap">
-      <div class="section-title">Who are you?</div>
-      <div class="staff-picker" id="staffPicker"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 0 0;">
+      <select id="voiceStaffSelect" onchange="setStaffFromVoice(this.value)" style="flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);">
+        <option value="">Select your name</option>
+      </select>
     </div>
 
     <div class="voice-wrap">
@@ -404,7 +405,7 @@ textarea { min-height: 72px; resize: vertical; }
         </svg>
       </button>
       <div class="mic-status" id="micStatus">Tap mic · speak your full visit details</div>
-      <div class="mic-hint" id="micHint">Include: client name, location, visit type, rep met, purpose, time in/out, actions, follow-up date</div>
+      <div class="mic-hint" id="micHint">Say: client, location, visit type, rep met, time in/out, purpose, actions, follow-up date</div>
 
       <!-- Transcript + playback + parse all in one area -->
       <div id="transcriptArea" style="display:none;width:100%;margin-top:12px;">
@@ -1031,7 +1032,7 @@ function resetVoice() {
   document.getElementById('parseActions').style.display = 'none';
   document.getElementById('parsedSection').style.display = 'none';
   document.getElementById('micStatus').textContent = 'Tap mic · speak your full visit details';
-  document.getElementById('micHint').textContent = 'Include: client name, location, visit type, rep met, purpose, time in/out, actions, follow-up date';
+  document.getElementById('micHint').textContent = 'Say: client, location, visit type, rep met, time in/out, purpose, actions, follow-up date';
   document.getElementById('micBtn').classList.remove('recording');
   document.getElementById('micBtn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
 }
