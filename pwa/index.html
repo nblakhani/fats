@@ -838,27 +838,61 @@ function toggleRec() {
   isRec ? stopRec() : startRec();
 }
 
-function startRec() {
+async function startRec() {
+  // Check mic permission first
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop()); // release immediately
+  } catch(e) {
+    showToast('Microphone permission denied — allow mic in browser settings', 'error');
+    document.getElementById('micStatus').textContent = 'Mic permission denied — tap the lock icon in address bar and allow microphone';
+    return;
+  }
+
   isRec = true; fullTx = '';
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recog = new SR(); recog.continuous = true; recog.interimResults = true; recog.lang = 'en-IN';
+  recog = new SR();
+  recog.continuous = true;
+  recog.interimResults = true;
+  recog.lang = 'en-IN';
+  recog.maxAlternatives = 1;
+
   const mb = document.getElementById('micBtn');
   mb.classList.add('recording');
   mb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-  document.getElementById('micStatus').textContent = 'Recording… tap to stop';
+  document.getElementById('micStatus').textContent = 'Recording… speak now, tap to stop';
   document.getElementById('micHint').textContent = '';
   const tb = document.getElementById('transcriptBox');
-  tb.style.display = 'block'; tb.textContent = '';
+  tb.style.display = 'block'; tb.textContent = 'Listening…';
+
   recog.onresult = e => {
     let interim = ''; fullTx = '';
     for (let i=0; i<e.results.length; i++) {
       if (e.results[i].isFinal) fullTx += e.results[i][0].transcript + ' ';
       else interim += e.results[i][0].transcript;
     }
-    tb.textContent = fullTx + interim;
+    tb.textContent = (fullTx + interim) || 'Listening…';
   };
-  recog.onend = () => { if (isRec) recog.start(); };
-  recog.start();
+
+  recog.onerror = e => {
+    console.error('Speech error:', e.error);
+    const msgs = {
+      'not-allowed': 'Mic blocked — allow microphone in browser settings',
+      'no-speech':   'No speech detected — speak louder or closer to mic',
+      'network':     'Network error — check internet connection',
+      'aborted':     'Recording stopped',
+    };
+    document.getElementById('micStatus').textContent = msgs[e.error] || 'Error: ' + e.error;
+    isRec = false;
+    mb.classList.remove('recording');
+  };
+
+  recog.onend = () => { if (isRec) { try { recog.start(); } catch(e) {} } };
+  try {
+    recog.start();
+  } catch(e) {
+    showToast('Could not start recording: ' + e.message, 'error');
+  }
 }
 
 function stopRec() {
