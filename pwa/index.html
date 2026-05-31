@@ -803,7 +803,8 @@ async function loadStaff() {
     if (vsel2) vsel2.innerHTML = '<option value="">Cannot load staff</option>';
     return;
   }
-  staffList = data.filter(s => s.role === 'field_staff');
+  staffList = data.filter(s => s.role === 'field_staff' || s.role === 'manager');
+  if (!staffList.length) staffList = data; // fallback: show all staff
 
   // Voice tab dropdown
   const vsel = document.getElementById('voiceStaffSelect');
