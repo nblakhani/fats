@@ -35,14 +35,14 @@ print("✓ Railway is reachable\n")
 # ── STAFF ─────────────────────────────────────
 print("Creating staff...")
 staff_data = [
-    dict(name="Gian Taneja",       phone="9835547533", email="gian@apexcorporation.net",    role="manager",     region="Jamshedpur"),
-    dict(name="V.N. Tiwary",       phone="9304003154", email="vn.tiwary@apexcorporation.net",role="manager",    region="Ranchi"),
-    dict(name="Bhargav Vatsyayan", lob="Compressed Air", phone="9835100001", email="bhargav@apexcorporation.net",  role="field_staff", region="Jamshedpur"),
-    dict(name="R.B. Prasad", lob="Mining Equipment",       phone="9835100002", email="rb.prasad@apexcorporation.net",role="field_staff", region="Jamshedpur"),
-    dict(name="Arjun Prasad", lob="Office Automation, Computers & IT",      phone="9835100003", email="arjun@apexcorporation.net",    role="field_staff", region="Jamshedpur"),
-    dict(name="Ajay Kumar Pandey", lob="Industrial Bearings, Material Handling", phone="9835100004", email="ajay@apexcorporation.net",     role="field_staff", region="Ranchi"),
-    dict(name="Sumit Choubey", lob="Motors & Fans, Mining Equipment",     phone="9835100005", email="sumit@apexcorporation.net",    role="field_staff", region="Ranchi"),
-    dict(name="Rajeev Kumar Sharma", lob="Industrial Bearings, Compressed Air",phone="9835100006",email="rajeev@apexcorporation.net",   role="field_staff", region="Jamshedpur"),
+    dict(name="Gian Taneja",       phone="9835547533", email="gian@apexcorporation.net",    role="manager",     region="Jamshedpur", pin="1111"),
+    dict(name="V.N. Tiwary",       phone="9304003154", email="vn.tiwary@apexcorporation.net",role="manager",    region="Ranchi", pin="1111"),
+    dict(name="Bhargav Vatsyayan", lob="Compressed Air", phone="9835100001", email="bhargav@apexcorporation.net",  role="field_staff", region="Jamshedpur", pin="1111"),
+    dict(name="R.B. Prasad", lob="Mining Equipment",       phone="9835100002", email="rb.prasad@apexcorporation.net",role="field_staff", region="Jamshedpur", pin="1111"),
+    dict(name="Arjun Prasad", lob="Office Automation, Computers & IT",      phone="9835100003", email="arjun@apexcorporation.net",    role="field_staff", region="Jamshedpur", pin="1111"),
+    dict(name="Ajay Kumar Pandey", lob="Industrial Bearings, Material Handling", phone="9835100004", email="ajay@apexcorporation.net",     role="field_staff", region="Ranchi", pin="1111"),
+    dict(name="Sumit Choubey", lob="Motors & Fans, Mining Equipment",     phone="9835100005", email="sumit@apexcorporation.net",    role="field_staff", region="Ranchi", pin="1111"),
+    dict(name="Rajeev Kumar Sharma", lob="Industrial Bearings, Compressed Air",phone="9835100006",email="rajeev@apexcorporation.net",   role="field_staff", region="Jamshedpur", pin="1111"),
 ]
 
 staff_map = {}
