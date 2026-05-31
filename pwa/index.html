@@ -100,7 +100,8 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 
 /* MAIN SCROLL AREA */
 .main {
-  padding: 12px 14px 80px;
+  padding: 16px 16px 80px;
+  min-height: calc(100vh - 56px);
 }
 
 /* SECTIONS */
@@ -130,9 +131,6 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .field { margin-bottom: 12px; }
 .field-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
 .field-label .req { color: var(--red); }
-input[type=text]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus {
-  border-color: var(--green) !important;
-}
 input[type=text], input[type=date], input[type=time], select, textarea {
   width: 100%;
   padding: 10px 12px;
@@ -316,7 +314,7 @@ textarea { min-height: 72px; resize: vertical; }
 .toast.error   { background: var(--red); }
 
 /* SECTION TITLE */
-.section-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
 
 /* STAFF PICKER */
 .staff-picker {
@@ -353,23 +351,6 @@ textarea { min-height: 72px; resize: vertical; }
   margin: 0 auto 4px;
 }
 .staff-btn.selected .staff-initial { background: var(--green); color: #fff; }
-
-/* VALIDATION */
-.field-error { border-color: var(--red) !important; }
-.field-error-msg { font-size: 11px; color: var(--red); margin-top: 3px; display: none; }
-.field-error-msg.show { display: block; }
-.required-star { color: var(--red); margin-left: 2px; }
-.validation-banner {
-  background: var(--red-lt);
-  border: 1px solid var(--red);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--red);
-  margin-bottom: 12px;
-  display: none;
-}
-.validation-banner.show { display: block; }
 </style>
 </head>
 <body>
@@ -388,11 +369,10 @@ textarea { min-height: 72px; resize: vertical; }
 <div class="main">
 
   <!-- VOICE LOG -->
-  <div id="tab-voice" class="section">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 0 0;">
-      <select id="voiceStaffSelect" onchange="setStaffFromVoice(this.value)" style="flex:1;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);">
-        <option value="">Select your name</option>
-      </select>
+  <div id="tab-voice" class="section active">
+    <div id="staffPickerWrap">
+      <div class="section-title">Who are you?</div>
+      <div class="staff-picker" id="staffPicker"></div>
     </div>
 
     <div class="voice-wrap">
@@ -404,26 +384,8 @@ textarea { min-height: 72px; resize: vertical; }
         </svg>
       </button>
       <div class="mic-status" id="micStatus">Tap mic · speak your full visit details</div>
-      <div class="mic-hint" id="micHint">Say: client, location, visit type, rep met, time in/out, purpose, actions, follow-up date</div>
-
-      <!-- Transcript + playback + parse all in one area -->
-      <div id="transcriptArea" style="display:none;width:100%;margin-top:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">What we heard:</div>
-        <div id="transcriptBox" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;line-height:1.6;color:var(--text);min-height:60px;margin-bottom:10px;"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn" style="flex:1;display:flex;align-items:center;gap:6px;justify-content:center;" onclick="replayTranscript()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Play back
-          </button>
-          <button class="btn btn-primary" style="flex:2;display:flex;align-items:center;gap:6px;justify-content:center;" onclick="parseVoice()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3"/></svg>
-            Fill in fields
-          </button>
-          <button class="btn" style="padding:8px 12px;" onclick="resetVoice()" title="Clear and re-record">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.13"/></svg>
-          </button>
-        </div>
-      </div>
+      <div class="mic-hint" id="micHint">Include: client name, location, visit type, rep met, purpose, time in/out, actions, follow-up date</div>
+      <div class="transcript-box" id="transcriptBox" style="display:none;"></div>
     </div>
 
     <div id="iosBanner" style="display:none;background:#fef8ec;border:1px solid #f5c842;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:#7a5800;">
@@ -446,17 +408,9 @@ textarea { min-height: 72px; resize: vertical; }
       <span id="gpsText">Capturing location…</span>
     </div>
 
-    <div id="parsedSection" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:16px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-        <button class="btn" onclick="document.getElementById('parsedSection').style.display='none'" style="padding:6px 10px;">← Back</button>
-        <div style="font-weight:600;font-size:14px;">Log visit</div>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Your recording:</div>
-        <div id="transcriptRef" style="font-size:13px;line-height:1.6;color:var(--text);"></div>
-      </div>
+    <div id="parsedSection" style="display:none;">
       <div class="card">
-        <div class="card-head">Fill in visit details</div>
+        <div class="card-head">Review parsed fields <span style="font-size:11px;color:var(--text3);font-weight:400;">edit if needed</span></div>
         <div class="card-body" id="parsedFormBody"></div>
       </div>
       <button class="btn btn-primary" onclick="submitEntry('voice')">
@@ -471,7 +425,7 @@ textarea { min-height: 72px; resize: vertical; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
         </svg>
-        Fill in fields
+        Parse with AI
       </button>
       <button class="btn" onclick="resetVoice()" style="margin-top:8px;">Re-record</button>
     </div>
@@ -479,38 +433,35 @@ textarea { min-height: 72px; resize: vertical; }
 
   <!-- TEXT LOG -->
   <div id="tab-text" class="section">
-    <div class="validation-banner" id="textValidationBanner"></div>
+    <div class="section-title">Log a visit</div>
+
+    <div id="gpsBarText" class="gps-bar" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span id="gpsTextForm">Capturing location…</span>
+    </div>
 
     <div class="card">
       <div class="card-body">
-        <!-- Compact top row: staff + date + priority + GPS in one line -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
-          <div class="field" style="margin:0;">
-            <div class="field-label">Staff <span class="req">*</span></div>
-            <select id="f-staff" onchange="clearFieldError('f-staff')"><option value="">Select name</option></select>
-          </div>
-          <div class="field" style="margin:0;">
+        <div class="field">
+          <div class="field-label">Staff name <span class="req">*</span></div>
+          <select id="f-staff"><option value="">Select staff member</option></select>
+        </div>
+        <div class="row2">
+          <div class="field">
             <div class="field-label">Date</div>
             <input type="date" id="f-date">
           </div>
-          <div class="field" style="margin:0;">
+          <div class="field">
             <div class="field-label">Priority</div>
             <select id="f-priority"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select>
           </div>
-          <div class="field" style="margin:0;">
-            <div class="field-label">📍 Location GPS</div>
-            <div id="gpsBarText" class="gps-bar" style="font-size:11px;padding:6px 8px;margin:0;border-radius:6px;display:none;">
-              <span id="gpsTextForm">Capturing…</span>
-            </div>
-            <div id="gpsBarTextStatic" style="font-size:11px;color:var(--text3);padding:6px 0;">Auto-captured on save</div>
-          </div>
-        </div>
-        <!-- removed dup -->
         </div>
 
         <div class="field">
           <div class="field-label">Client / company <span class="req">*</span></div>
-          <select id="f-client" onchange="clearFieldError('f-client')"><option value="">Select or type below</option></select>
+          <select id="f-client"><option value="">Select or type below</option></select>
         </div>
         <div class="field">
           <div class="field-label">New client (if not in list)</div>
@@ -518,70 +469,56 @@ textarea { min-height: 72px; resize: vertical; }
         </div>
 
         <div class="field">
-          <div class="field-label">Representative met <span class="required-star">*</span></div>
+          <div class="field-label">Representative met</div>
           <input type="text" id="f-rep" placeholder="Name & designation">
         </div>
         <div class="field">
-          <div class="field-label">Location / area <span class="required-star">*</span></div>
+          <div class="field-label">Location / area</div>
           <input type="text" id="f-location" placeholder="e.g. Bistupur, Jamshedpur">
         </div>
         <div class="field">
-          <div class="field-label">Visit type <span class="required-star">*</span></div>
-          <select id="f-type" onchange="clearFieldError('f-type')">
+          <div class="field-label">Visit type</div>
+          <select id="f-type">
             <option>Follow-up</option><option>Sales call</option><option>Prospecting</option>
             <option>Service visit</option><option>Demo</option><option>Collection</option>
             <option>Delivery</option><option>Complaint</option>
           </select>
         </div>
-        <div class="field">
-          <div class="field-label">Line of Business (LOB) <span class="required-star">*</span></div>
-          <select id="f-lob" onchange="clearFieldError('f-lob')">
-            <option value="">Select LOB</option>
-            <option>Compressed Air</option>
-            <option>Power Technique</option>
-            <option>Mining Equipment</option>
-            <option>Industrial Bearings</option>
-            <option>Office Automation</option>
-            <option>Motors & Fans</option>
-            <option>Material Handling</option>
-            <option>Printing</option>
-            <option>Computers & IT</option>
-          </select>
-        </div>
         <div class="row2">
-          <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="time" id="f-tin" onchange="clearFieldError('f-tin')"></div>
-          <div class="field"><div class="field-label">Time out <span class="required-star">*</span></div><input type="time" id="f-tout"></div>
+          <div class="field"><div class="field-label">Time in</div><input type="time" id="f-tin"></div>
+          <div class="field"><div class="field-label">Time out</div><input type="time" id="f-tout"></div>
         </div>
         <div class="field">
-          <div class="field-label">Main purpose / issue <span class="required-star">*</span></div>
-          <textarea id="f-purpose" oninput="clearFieldError('f-purpose')" placeholder="Why did you visit?"></textarea>
+          <div class="field-label">Main purpose / issue</div>
+          <textarea id="f-purpose" placeholder="Why did you visit?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Previous visit summary <span class="required-star">*</span></div>
+          <div class="field-label">Previous visit summary</div>
           <textarea id="f-prev" placeholder="What was discussed / committed last time?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Action items from today <span class="required-star">*</span></div>
+          <div class="field-label">Action items from today</div>
           <textarea id="f-action" placeholder="What needs to be done?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Help needed from manager <span class="required-star">*</span></div>
+          <div class="field-label">Help needed from manager</div>
           <textarea id="f-help" placeholder="Any approvals, support, or resources needed?"></textarea>
         </div>
         <div class="field">
-          <div class="field-label">Next follow-up date <span class="required-star">*</span></div>
+          <div class="field-label">Next follow-up date</div>
           <input type="date" id="f-followup">
         </div>
         <div class="field">
-          <div class="field-label">Notes / outcome <span class="required-star">*</span></div>
+          <div class="field-label">Notes</div>
           <textarea id="f-notes" placeholder="Any other observations"></textarea>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <button class="btn btn-primary" onclick="submitEntry('text')" style="flex:1;padding:10px;">Save visit</button>
-          <button class="btn" onclick="clearTextForm()" style="padding:10px 16px;">Clear</button>
         </div>
       </div>
     </div>
+    <button class="btn btn-primary" onclick="submitEntry('text')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Save visit
+    </button>
+    <button class="btn" onclick="clearTextForm()" style="margin-top:8px;">Clear</button>
   </div>
 
   <!-- MY VISITS -->
@@ -602,59 +539,18 @@ textarea { min-height: 72px; resize: vertical; }
     </div>
   </div>
 
-
-  <!-- CALENDAR -->
-  <div id="tab-cal" class="section active">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <div class="section-title" style="margin-bottom:0;">My Calendar</div>
-      <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="calToday()">Today</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-      <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(-1)">&#8592;</button>
-      <div style="flex:1;text-align:center;font-weight:600;font-size:15px;" id="calMonthLabel"></div>
-      <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(1)">&#8594;</button>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg);">
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">S</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">M</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">T</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">W</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">T</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">F</div>
-        <div style="text-align:center;padding:6px 2px;font-size:10px;font-weight:600;color:var(--text3);">S</div>
-      </div>
-      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
-    </div>
-    <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap;">
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:3px;vertical-align:middle;"></span>Visit</span>
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:3px;vertical-align:middle;"></span>Follow-up due</span>
-    </div>
-    <div id="calDayPanel" style="margin-top:12px;"></div>
-  </div>
-
-
-  <!-- FEEDBACK INBOX -->
-  <div id="tab-fb" class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <div class="section-title" style="margin-bottom:0;">Feedback from Manager</div>
-      <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="markAllRead()">Mark all read</button>
-    </div>
-    <div id="fbInbox"><div class="loading"><span class="spinner"></span> Loading…</div></div>
-  </div>
-
 </div><!-- /main -->
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-btn" onclick="switchTab('voice')">
+  <button class="nav-btn active" onclick="switchTab('voice')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
     </svg>
     Voice
   </button>
-  <button class="nav-btn active" onclick="switchTab('text')">
+  <button class="nav-btn" onclick="switchTab('text')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
       <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
@@ -676,19 +572,6 @@ textarea { min-height: 72px; resize: vertical; }
     </svg>
     Follow-ups <span id="fuNavBadge"></span>
   </button>
-  <button class="nav-btn active" onclick="switchTab('cal')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-    Calendar
-  </button>
-  <button class="nav-btn" onclick="switchTab('fb')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
-    Feedback <span id="fbNavBadge"></span>
-  </button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -696,14 +579,16 @@ textarea { min-height: 72px; resize: vertical; }
 <script>
 const API = 'https://fats-production.up.railway.app/api';
 const BASE = API;
-
+const SYSTEM_PROMPT = `You parse a spoken field visit log into JSON for Apex Corporation India Pvt Ltd (industrial equipment company in Jamshedpur).
+Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
+Respond ONLY with valid JSON, no markdown. Today: ${new Date().toISOString().slice(0,10)}.`;
 
 let staffList = [], clientList = [];
 let selectedStaffId = '';
 let isRec = false, recog = null, fullTx = '';
 let gpsCoords = null;
 let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
-let currentTab = 'cal';
+let currentTab = 'voice';
 
 // ── INIT ─────────────────────────────────────
 window.addEventListener('load', async () => {
@@ -718,14 +603,9 @@ window.addEventListener('load', async () => {
   window.addEventListener('online',  () => { checkOnline(); syncOfflineQueue(); });
   window.addEventListener('offline', () => checkOnline());
   captureGPS();
-  await loadStaff();   // staff list + restore saved name
+  await loadStaff();
   await loadClients();
-  // Set today's date in text form
-  const fd = document.getElementById('f-date');
-  if (fd) fd.value = new Date().toISOString().slice(0,10);
-  // Now load calendar (staff list ready, name restored)
-  await loadCal();
-  // Load other tabs in background
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
   loadMyVisits();
   loadMyFU();
 });
@@ -802,58 +682,34 @@ function captureGPS() {
 async function loadStaff() {
   const data = await api('/staff/');
   if (!data) {
-    const fsel = document.getElementById('f-staff');
-    if (fsel) fsel.innerHTML = '<option value="">Cannot load staff</option>';
-    const vsel2 = document.getElementById('voiceStaffSelect');
-    if (vsel2) vsel2.innerHTML = '<option value="">Cannot load staff</option>';
+    document.getElementById('staffPicker').innerHTML =
+      '<div style="color:var(--red);font-size:13px;padding:8px;">Cannot load staff — check connection</div>';
+    document.getElementById('f-staff').innerHTML =
+      '<option value="">Cannot load staff</option>';
     return;
   }
   staffList = data.filter(s => s.role === 'field_staff');
 
-  // Voice tab dropdown
-  const vsel = document.getElementById('voiceStaffSelect');
-  if (vsel) {
-    vsel.innerHTML = '<option value="">Select your name</option>' +
-      staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  }
+  // Staff picker (voice tab)
+  const picker = document.getElementById('staffPicker');
+  picker.innerHTML = staffList.map(s => `
+    <div class="staff-btn" id="sp-${s.id}" onclick="selectStaff('${s.id}')">
+      <div class="staff-initial">${initials(s.name)}</div>
+      ${s.name.split(' ')[0]}
+    </div>`).join('');
 
-  // Text tab dropdown
+  // Staff dropdown (text tab)
   const sel = document.getElementById('f-staff');
-  if (sel) {
-    sel.innerHTML = '<option value="">Select name</option>' +
-      staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  }
-
-  // Restore last used staff
-  try {
-    const lastId = localStorage.getItem('lastStaffId');
-    if (lastId && staffList.find(s => s.id === lastId)) {
-      selectedStaffId = lastId;
-      if (vsel) vsel.value = lastId;
-      if (sel) sel.value = lastId;
-      // Highlight legacy picker button too
-      const btn = document.getElementById('sp-'+lastId);
-      if (btn) btn.classList.add('selected');
-    }
-  } catch(e) {}
+  sel.innerHTML = '<option value="">Select staff member</option>' +
+    staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 }
 
 function selectStaff(id) {
   selectedStaffId = id;
-  try { localStorage.setItem('lastStaffId', id); } catch(e) {}
   document.querySelectorAll('.staff-btn').forEach(b => b.classList.remove('selected'));
   const btn = document.getElementById('sp-'+id);
   if (btn) btn.classList.add('selected');
-  // Sync both dropdowns
-  const vsel = document.getElementById('voiceStaffSelect');
-  if (vsel) vsel.value = id;
-  const fsel = document.getElementById('f-staff');
-  if (fsel) fsel.value = id;
-  showToast('Logged in as ' + ((staffList.find(function(s){return s.id===id;})||{name:'staff'}).name));
-  loadFeedbackBadge();
-  loadMyFU();
-  // Reload calendar with new staff
-  if (currentTab === 'cal') loadCal();
+  showToast(`Logged in as ${staffList.find(s=>s.id===id)?.name||'staff'}`);
 }
 
 async function loadClients() {
@@ -872,15 +728,12 @@ async function loadClients() {
 // ── NAVIGATION ────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.nav-btn').forEach((b,i) =>
-    b.classList.toggle('active', ['voice','text','visits','fu','cal','fb'][i]===name || (name==='text' && !['voice','visits','fu','cal','fb'].includes(name) && i===1)));
+    b.classList.toggle('active', ['voice','text','visits','fu'][i]===name));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   currentTab = name;
   if (name==='visits') loadMyVisits();
   if (name==='fu') loadMyFU();
-  if (name==='cal') loadCal();
-  if (name==='text') { document.getElementById('f-date').value = new Date().toISOString().slice(0,10); captureGPS(); }
-  if (name==='fb') loadFeedback();
 }
 
 // ── VOICE ─────────────────────────────────────
@@ -891,67 +744,27 @@ function toggleRec() {
   isRec ? stopRec() : startRec();
 }
 
-async function startRec() {
-  // Check mic permission first
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stream.getTracks().forEach(t => t.stop()); // release immediately
-  } catch(e) {
-    showToast('Microphone permission denied — allow mic in browser settings', 'error');
-    document.getElementById('micStatus').textContent = 'Mic permission denied — tap the lock icon in address bar and allow microphone';
-    return;
-  }
-
+function startRec() {
   isRec = true; fullTx = '';
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recog = new SR();
-  recog.continuous = true;
-  recog.interimResults = true;
-  recog.lang = 'en-IN';
-  recog.maxAlternatives = 1;
-
+  recog = new SR(); recog.continuous = true; recog.interimResults = true; recog.lang = 'en-IN';
   const mb = document.getElementById('micBtn');
   mb.classList.add('recording');
   mb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
-  document.getElementById('micStatus').textContent = 'Recording… speak now, tap to stop';
+  document.getElementById('micStatus').textContent = 'Recording… tap to stop';
   document.getElementById('micHint').textContent = '';
-  document.getElementById('transcriptArea').style.display = 'none';
   const tb = document.getElementById('transcriptBox');
-  tb.textContent = 'Listening…';
-
+  tb.style.display = 'block'; tb.textContent = '';
   recog.onresult = e => {
     let interim = ''; fullTx = '';
     for (let i=0; i<e.results.length; i++) {
       if (e.results[i].isFinal) fullTx += e.results[i][0].transcript + ' ';
       else interim += e.results[i][0].transcript;
     }
-    tb.textContent = (fullTx + interim) || 'Listening…';
+    tb.textContent = fullTx + interim;
   };
-
-  recog.onerror = e => {
-    console.error('Speech error:', e.error);
-    if (e.error === 'no-speech') {
-      // Auto-restart on no-speech — keep listening
-      document.getElementById('micStatus').textContent = 'Still listening… speak now';
-      return;
-    }
-    if (e.error === 'aborted') return; // normal stop
-    const msgs = {
-      'not-allowed': 'Mic blocked — allow microphone in browser settings',
-      'network':     'Network error — check internet connection',
-      'audio-capture': 'No microphone found — check your mic is plugged in',
-    };
-    document.getElementById('micStatus').textContent = msgs[e.error] || 'Error: ' + e.error + ' — try again';
-    isRec = false;
-    mb.classList.remove('recording');
-  };
-
-  recog.onend = () => { if (isRec) { try { recog.start(); } catch(e) {} } };
-  try {
-    recog.start();
-  } catch(e) {
-    showToast('Could not start recording: ' + e.message, 'error');
-  }
+  recog.onend = () => { if (isRec) recog.start(); };
+  recog.start();
 }
 
 function stopRec() {
@@ -962,18 +775,38 @@ function stopRec() {
   mb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
   const txt = (fullTx || document.getElementById('transcriptBox').textContent).trim();
   if (txt) {
-    document.getElementById('transcriptBox').textContent = txt;
-    document.getElementById('transcriptArea').style.display = 'block';
-    document.getElementById('micStatus').textContent = 'Captured! Review below then parse.';
+    document.getElementById('micStatus').textContent = 'Tap "Parse with AI" to extract fields';
+    document.getElementById('parseActions').style.display = 'block';
   } else {
     document.getElementById('micStatus').textContent = 'Nothing captured — try again';
   }
 }
 
-function parseVoice() {
-  // Just open the form with transcript shown at top — staff fill fields manually
-  buildParsedForm({});
-  document.getElementById('micStatus').textContent = '✓ Transcript saved — fill in the fields below';
+async function parseVoice() {
+  const txt = (fullTx || document.getElementById('transcriptBox').textContent).trim();
+  if (!txt) return;
+  document.getElementById('micStatus').innerHTML = '<span class="spinner"></span> Parsing…';
+  document.getElementById('parseActions').style.display = 'none';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: txt }]
+      })
+    });
+    const d = await r.json();
+    const raw = d.content?.[0]?.text || '{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    buildParsedForm(parsed);
+    document.getElementById('micStatus').textContent = 'Fields parsed — review below';
+  } catch(e) {
+    buildParsedForm({});
+    document.getElementById('micStatus').textContent = 'Parse error — fill manually';
+  }
 }
 
 function buildParsedForm(data) {
@@ -990,7 +823,6 @@ function buildParsedForm(data) {
     { id:'vf-action',  label:'Action items',      type:'textarea', key:'actionItems' },
     { id:'vf-help',    label:'Help needed',       type:'textarea', key:'helpNeeded' },
     { id:'vf-followup',label:'Follow-up date',    type:'date',     key:'followUpDate' },
-    { id:'vf-lob',     label:'Line of Business',  type:'select-lob' },
     { id:'vf-priority',label:'Priority',          type:'select-priority' },
     { id:'vf-notes',   label:'Notes',             type:'textarea', key:'notes' },
   ];
@@ -1009,9 +841,6 @@ function buildParsedForm(data) {
     } else if (f.type === 'select-type') {
       const types = ['Follow-up','Sales call','Prospecting','Service visit','Demo','Collection','Delivery','Complaint','Other'];
       html += `<select id="${f.id}">${types.map(t=>`<option${data.visitType===t?' selected':''}>${t}</option>`).join('')}</select>`;
-    } else if (f.type === 'select-lob') {
-      const lobs = ['Compressed Air','Power Technique','Mining Equipment','Industrial Bearings','Office Automation','Motors & Fans','Material Handling','Printing','Computers & IT'];
-      html += `<select id="${f.id}"><option value="">Select LOB</option>${lobs.map(l=>`<option${data.lob===l?' selected':''}>${l}</option>`).join('')}</select>`;
     } else if (f.type === 'select-priority') {
       html += `<select id="${f.id}">
         <option${data.priority==='High'?' selected':''}>High</option>
@@ -1027,38 +856,17 @@ function buildParsedForm(data) {
   });
 
   document.getElementById('parsedFormBody').innerHTML = html;
-  // Show transcript at top for reference
-  const txRef = document.getElementById('transcriptRef');
-  if (txRef) {
-    const tx = (fullTx || document.getElementById('transcriptBox').textContent || '').trim();
-    txRef.textContent = tx || '(no transcript)';
-  }
-  const ps = document.getElementById('parsedSection');
-  ps.style.display = 'block';
-}
-
-function replayTranscript() {
-  const txt = document.getElementById('transcriptBox').textContent.trim();
-  if (!txt) return;
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(txt);
-    u.lang = 'en-IN';
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
-  } else {
-    showToast('Text-to-speech not supported on this browser', 'error');
-  }
+  document.getElementById('parsedSection').style.display = 'block';
 }
 
 function resetVoice() {
   fullTx = '';
-  document.getElementById('transcriptArea').style.display = 'none';
+  document.getElementById('transcriptBox').style.display = 'none';
   document.getElementById('transcriptBox').textContent = '';
   document.getElementById('parseActions').style.display = 'none';
   document.getElementById('parsedSection').style.display = 'none';
   document.getElementById('micStatus').textContent = 'Tap mic · speak your full visit details';
-  document.getElementById('micHint').textContent = 'Say: client, location, visit type, rep met, time in/out, purpose, actions, follow-up date';
+  document.getElementById('micHint').textContent = 'Include: client name, location, visit type, rep met, purpose, time in/out, actions, follow-up date';
   document.getElementById('micBtn').classList.remove('recording');
   document.getElementById('micBtn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
 }
@@ -1072,106 +880,52 @@ async function submitEntry(src) {
     const staffId = g('vf-staff') || selectedStaffId;
     const clientId = g('vf-client');
     const clientName = g('vf-newclient');
-
-    // Voice validation — ALL fields required
-    const voiceErrors = [];
-    if (!staffId)             voiceErrors.push('Staff name');
-    if (!clientId && !clientName) voiceErrors.push('Client name');
-    if (!g('vf-type'))        voiceErrors.push('Visit type');
-    if (!g('vf-lob'))         voiceErrors.push('Line of Business (LOB)');
-    if (!g('vf-repmet'))      voiceErrors.push('Representative met');
-    if (!g('vf-location'))    voiceErrors.push('Location');
-    if (!g('vf-tin'))         voiceErrors.push('Time in');
-    if (!g('vf-tout'))        voiceErrors.push('Time out');
-    if (!g('vf-purpose'))     voiceErrors.push('Purpose / main issue');
-    if (!g('vf-prev'))        voiceErrors.push('Previous visit summary');
-    if (!g('vf-action'))      voiceErrors.push('Action items');
-    if (!g('vf-followup'))    voiceErrors.push('Next follow-up date');
-    if (!g('vf-notes'))       voiceErrors.push('Notes');
-
-    if (voiceErrors.length) {
-      showToast('Missing: ' + voiceErrors.slice(0,3).join(', ') + (voiceErrors.length>3?' +more':''), 'error');
-      return;
-    }
-    const vActionText = g('vf-action');
-    const vFollowup = g('vf-followup');
+    if (!staffId) { showToast('Select a staff member', 'error'); return; }
+    if (!clientId && !clientName) { showToast('Select or enter a client', 'error'); return; }
     payload = {
       staff_id: staffId,
-      visit_type: g('vf-type') || 'Visit',
+      client_id: clientId || undefined,
+      client_name: !clientId ? clientName : undefined,
+      location: g('vf-location'),
+      visit_type: g('vf-type'),
+      rep_met: g('vf-repmet'),
+      time_in: g('vf-tin'),
+      time_out: g('vf-tout'),
+      purpose: g('vf-purpose'),
+      prev_visit_summary: g('vf-prev'),
+      action_items: g('vf-action') ? [g('vf-action')] : [],
+      help_needed: g('vf-help'),
+      follow_up_date: g('vf-followup'),
       priority: g('vf-priority') || 'Medium',
+      notes: g('vf-notes'),
       source: 'voice',
     };
-    if (clientId) payload.client_id = clientId;
-    else payload.client_name = clientName;
-    if (g('vf-lob'))      payload.lob = g('vf-lob');
-    if (g('vf-location')) payload.location = g('vf-location');
-    if (g('vf-repmet'))   payload.rep_met = g('vf-repmet');
-    if (g('vf-tin'))      payload.time_in = g('vf-tin');
-    if (g('vf-tout'))     payload.time_out = g('vf-tout');
-    if (g('vf-purpose'))  payload.purpose = g('vf-purpose');
-    if (g('vf-prev'))     payload.prev_visit_summary = g('vf-prev');
-    if (g('vf-help'))     payload.help_needed = g('vf-help');
-    if (g('vf-notes'))    payload.notes = g('vf-notes');
-    payload.action_items = vActionText ? [vActionText] : [];
-    if (vFollowup)        payload.follow_up_date = vFollowup;
   } else {
     const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
     const staffId = g('f-staff');
     const clientId = g('f-client');
     const newClient = g('f-newclient');
-
-    // Text form validation
-    const errors = [];
-    const errorFields = [];
-    if (!staffId) { errors.push('Staff name'); errorFields.push('f-staff'); }
-    if (!clientId && !newClient) { errors.push('Client'); errorFields.push('f-client'); }
-    if (!g('f-type')) { errors.push('Visit type'); errorFields.push('f-type'); }
-    if (!g('f-lob')) { errors.push('Line of Business (LOB)'); errorFields.push('f-lob'); }
-    if (!g('f-purpose')) { errors.push('Purpose / main issue'); errorFields.push('f-purpose'); }
-    if (!g('f-tin')) { errors.push('Time in'); errorFields.push('f-tin'); }
-
-    // Clear previous errors
-    document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
-
-    if (errors.length) {
-      // Highlight error fields
-      errorFields.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('field-error');
-      });
-      // Show banner
-      const banner = document.getElementById('textValidationBanner');
-      banner.innerHTML = '⚠ Please fill in: <strong>' + errors.join(', ') + '</strong>';
-      banner.classList.add('show');
-      // Scroll to top of form
-      banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-
-    // Clear banner if valid
-    document.getElementById('textValidationBanner').classList.remove('show');
-    const actionText = g('f-action');
-    const followupVal = g('f-followup');
+    if (!staffId) { showToast('Select a staff member', 'error'); return; }
+    if (!clientId && !newClient) { showToast('Select or enter a client', 'error'); return; }
     payload = {
       staff_id: staffId,
-      visit_date: g('f-date') || new Date().toISOString().slice(0,10),
-      visit_type: g('f-type') || 'Visit',
+      client_id: clientId || undefined,
+      client_name: !clientId ? newClient : undefined,
+      visit_date: g('f-date'),
+      visit_type: g('f-type'),
+      rep_met: g('f-rep'),
+      location: g('f-location'),
+      time_in: g('f-tin'),
+      time_out: g('f-tout'),
+      purpose: g('f-purpose'),
+      prev_visit_summary: g('f-prev'),
+      action_items: g('f-action') ? [g('f-action')] : [],
+      help_needed: g('f-help'),
+      follow_up_date: g('f-followup'),
       priority: g('f-priority') || 'Medium',
+      notes: g('f-notes'),
       source: 'text',
     };
-    if (clientId) payload.client_id = clientId;
-    else payload.client_name = newClient;
-    if (g('f-lob'))      payload.lob = g('f-lob');
-    if (g('f-rep'))      payload.rep_met = g('f-rep');
-    if (g('f-location')) payload.location = g('f-location');
-    if (g('f-tin'))      payload.time_in = g('f-tin');
-    if (g('f-tout'))     payload.time_out = g('f-tout');
-    if (g('f-purpose'))  payload.purpose = g('f-purpose');
-    if (g('f-prev'))     payload.prev_visit_summary = g('f-prev');
-    if (g('f-help'))     payload.help_needed = g('f-help');
-    if (g('f-notes'))    payload.notes = g('f-notes');
-    payload.action_items = actionText ? [actionText] : [];
-    if (followupVal)     payload.follow_up_date = followupVal;
   }
 
   if (gpsCoords) {
@@ -1202,23 +956,18 @@ async function postVisit(payload) {
     return true;
   }
   try {
-    const url = API+'/visits/';
-    console.log('POST', url, JSON.stringify(payload).slice(0,200));
-    const r = await fetch(url, {
+    const r = await fetch(API+'/visits/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const txt = await r.text();
-    console.log('Response', r.status, txt.slice(0,200));
     if (r.ok) return true;
-    showToast('Error ' + r.status + ': ' + txt.slice(0,80), 'error');
+    showToast('Save failed — check connection', 'error');
     return false;
   } catch(e) {
-    console.error('Fetch error:', e);
-    showToast('Network error: ' + e.message, 'error');
     offlineQueue.push({ payload, timestamp: new Date().toISOString() });
     localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+    showToast('Saved offline — will sync', 'success');
     return true;
   }
 }
@@ -1239,13 +988,6 @@ async function syncOfflineQueue() {
   }
   localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
   if (synced > 0) showToast(`${synced} offline visit(s) synced`, 'success');
-}
-
-// Clear error highlight when user starts typing/selecting
-function clearFieldError(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('field-error');
-  document.getElementById('textValidationBanner')?.classList.remove('show');
 }
 
 function clearTextForm() {
@@ -1330,206 +1072,6 @@ function showToast(msg, type='') {
   t.className = 'toast show' + (type?' '+type:'');
   setTimeout(() => t.className='toast', 2800);
 }
-
-// ── STAFF CALENDAR ───────────────────────────
-let calYear = new Date().getFullYear();
-let calMonth = new Date().getMonth();
-let calVisits = [], calFU = [];
-
-function calToday() {
-  calYear = new Date().getFullYear();
-  calMonth = new Date().getMonth();
-  loadCal();
-}
-
-function calChangeMonth(d) {
-  calMonth += d;
-  if (calMonth > 11) { calMonth = 0; calYear++; }
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  loadCal();
-  document.getElementById('calDayPanel').innerHTML = '';
-}
-
-async function loadCal() {
-  if (!selectedStaffId) {
-    document.getElementById('calGrid').innerHTML = '';
-    document.getElementById('calMonthLabel').textContent = '';
-    // If staff not loaded yet, wait and retry
-    if (!staffList.length) {
-      document.getElementById('calDayPanel').innerHTML =
-        '<div style="padding:16px;text-align:center;color:var(--text3);">Loading staff list…</div>';
-      setTimeout(loadCal, 1000);
-      return;
-    }
-    document.getElementById('calDayPanel').innerHTML =
-      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;">' +
-      '<div style="font-size:14px;font-weight:600;margin-bottom:12px;text-align:center;">Who are you?</div>' +
-      '<select onchange="setStaffFromCal(this.value)" style="width:100%;font-size:15px;padding:10px;border:1px solid var(--border);border-radius:8px;">' +
-      '<option value="">Select your name</option>' +
-      staffList.map(function(s){ return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('') +
-      '</select></div>';
-    return;
-  }
-  const staffId = selectedStaffId;
-
-  const months = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-  document.getElementById('calMonthLabel').textContent = months[calMonth] + ' ' + calYear;
-
-  const mm   = String(calMonth+1).padStart(2,'0');
-  const from = `${calYear}-${mm}-01`;
-  const to   = `${calYear}-${mm}-31`;
-
-  const [visits, fu] = await Promise.all([
-    api(`/visits/?staff_id=${staffId}&from=${from}&to=${to}`),
-    api(`/follow-ups/?staff_id=${staffId}&from=${from}&to=${to}`)
-  ]);
-
-  calVisits = visits || [];
-  calFU     = fu || [];
-
-  renderCalGrid();
-}
-
-function renderCalGrid() {
-  const grid  = document.getElementById('calGrid');
-  const today = new Date();
-  const first = new Date(calYear, calMonth, 1).getDay();
-  const days  = new Date(calYear, calMonth+1, 0).getDate();
-
-  let html = '';
-
-  // Empty cells
-  for (let i=0; i<first; i++) {
-    html += '<div style="min-height:52px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg);opacity:0.4;"></div>';
-  }
-
-  for (let d=1; d<=days; d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
-    const dayVisits = calVisits.filter(v => v.visit_date === ds);
-    const dayFU     = calFU.filter(f => f.due_date === ds);
-    const hasItems  = dayVisits.length || dayFU.length;
-
-    html += `<div onclick="showCalDay('${ds}')" style="min-height:52px;padding:4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;background:${isToday?'var(--green-lt)':'var(--surface)'};${hasItems?'':''}">`;
-    html += `<div style="font-size:11px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--green)':'var(--text)'};margin-bottom:2px;">${d}</div>`;
-    dayVisits.slice(0,2).forEach(v => {
-      html += `<div style="font-size:9px;background:var(--blue-lt);color:var(--blue);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${(v.client_name||'').slice(0,10)}</div>`;
-    });
-    dayFU.slice(0,1).forEach(f => {
-      html += `<div style="font-size:9px;background:var(--red-lt);color:var(--red);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">↻ ${(f.client_name||'').slice(0,8)}</div>`;
-    });
-    html += '</div>';
-  }
-
-  grid.innerHTML = html;
-}
-
-function showCalDay(ds) {
-  const dayVisits = calVisits.filter(v => v.visit_date === ds);
-  const dayFU     = calFU.filter(f => f.due_date === ds);
-  const panel     = document.getElementById('calDayPanel');
-
-  if (!dayVisits.length && !dayFU.length) { panel.innerHTML = ''; return; }
-
-  const d = new Date(ds+'T00:00:00');
-  const label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-
-  let html = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
-    <div style="padding:10px 14px;background:var(--bg);font-weight:600;font-size:13px;border-bottom:1px solid var(--border);">${label}</div>`;
-
-  dayVisits.forEach(v => {
-    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div style="font-weight:500;font-size:13px;">${v.client_name||'—'}</div>
-        <div style="font-size:11px;color:var(--text2);">${v.time_in||''}${v.time_in&&v.time_out?' – ':''}${v.time_out||''}</div>
-      </div>
-      <div style="font-size:12px;color:var(--text2);">${v.visit_type} ${v.rep_met?'· '+v.rep_met:''}</div>
-      ${v.purpose?`<div style="font-size:12px;color:var(--text2);margin-top:3px;">${v.purpose.slice(0,100)}</div>`:''}
-    </div>`;
-  });
-
-  dayFU.forEach(f => {
-    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--red-lt);">
-      <div style="font-weight:500;font-size:13px;color:var(--red);">↻ Follow-up: ${f.client_name}</div>
-      ${f.notes?`<div style="font-size:12px;color:var(--red);margin-top:3px;opacity:0.8;">${f.notes}</div>`:''}
-    </div>`;
-  });
-
-  html += '</div>';
-  panel.innerHTML = html;
-}
-
-
-// ── FEEDBACK INBOX ────────────────────────────
-async function loadFeedback() {
-  const staffId = selectedStaffId || staffList[0]?.id;
-  if (!staffId) { document.getElementById('fbInbox').innerHTML='<div class="empty">Select your name first</div>'; return; }
-
-  const data = await api('/feedback/staff/'+staffId+'/');
-  const el = document.getElementById('fbInbox');
-
-  if (!data || !data.length) {
-    el.innerHTML='<div class="empty">No feedback yet</div>';
-    return;
-  }
-
-  const typeColors = {
-    great_job: {bg:'#eaf3de',color:'#3b6d11'},
-    well_done: {bg:'#eaf3de',color:'#3b6d11'},
-    good_effort: {bg:'#eaf3de',color:'#3b6d11'},
-    needs_followup: {bg:'#faeeda',color:'#854f0b'},
-    improve_notes: {bg:'#faeeda',color:'#854f0b'},
-    improve_coverage: {bg:'#faeeda',color:'#854f0b'},
-    pricing_support: {bg:'var(--blue-lt)',color:'var(--blue)'},
-    escalating: {bg:'var(--red-lt)',color:'var(--red)'},
-    custom: {bg:'var(--bg)',color:'var(--text2)'},
-  };
-
-  el.innerHTML = data.map(f => {
-    const col = typeColors[f.ftype] || {bg:'var(--bg)',color:'var(--text2)'};
-    return `<div class="visit-item" style="${!f.is_read?'border-left:3px solid var(--green);':''}" onclick="markRead('${f.id}',this)">
-      <div class="vi-head">
-        <div>
-          <div style="font-size:13px;font-weight:600;padding:4px 10px;border-radius:20px;display:inline-block;background:${col.bg};color:${col.color};margin-bottom:4px;">${f.label}</div>
-          <div class="vi-meta">From: ${f.from_name||'Manager'} · ${new Date(f.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</div>
-        </div>
-        ${!f.is_read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px;"></div>':''}
-      </div>
-      ${f.message?`<div class="vi-detail" style="margin-top:6px;font-style:italic;">"${f.message}"</div>`:''}
-    </div>`;
-  }).join('');
-
-  // Update badge
-  const unread = data.filter(f=>!f.is_read).length;
-  document.getElementById('fbNavBadge').innerHTML = unread ? `<span class="nav-badge">${unread}</span>` : '';
-}
-
-async function markRead(fbId, el) {
-  await fetch(`${API}/feedback/${fbId}/read/`, { method: 'PATCH' });
-  el.style.borderLeft = '';
-  el.querySelector('[style*="border-radius:50%"]')?.remove();
-  loadFeedbackBadge();
-}
-
-async function markAllRead() {
-  const staffId = selectedStaffId || staffList[0]?.id;
-  if (!staffId) return;
-  await fetch(`${API}/feedback/staff/${staffId}/read-all/`, { method: 'PATCH' });
-  loadFeedback();
-}
-
-async function loadFeedbackBadge() {
-  const staffId = selectedStaffId || staffList[0]?.id;
-  if (!staffId) return;
-  const data = await api('/feedback/staff/'+staffId+'/unread-count/');
-  if (data && data.count > 0) {
-    document.getElementById('fbNavBadge').innerHTML = `<span class="nav-badge">${data.count}</span>`;
-  } else {
-    document.getElementById('fbNavBadge').innerHTML = '';
-  }
-}
-
 </script>
 </body>
 </html>
