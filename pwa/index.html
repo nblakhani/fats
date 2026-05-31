@@ -796,15 +796,14 @@ function captureGPS() {
 // ── STAFF & CLIENTS ───────────────────────────
 async function loadStaff() {
   const data = await api('/staff/');
+  console.log('loadStaff data:', data ? data.length + ' staff' : 'NULL - API failed');
   if (!data) {
-    const fsel = document.getElementById('f-staff');
-    if (fsel) fsel.innerHTML = '<option value="">Cannot load staff</option>';
-    const vsel2 = document.getElementById('voiceStaffSelect');
-    if (vsel2) vsel2.innerHTML = '<option value="">Cannot load staff</option>';
+    showToast('Cannot load staff list - check connection', 'error');
     return;
   }
   staffList = data.filter(s => s.role === 'field_staff' || s.role === 'manager');
   if (!staffList.length) staffList = data; // fallback: show all staff
+  console.log('staffList:', staffList.length, 'members');
 
   // Voice tab dropdown
   const vsel = document.getElementById('voiceStaffSelect');
