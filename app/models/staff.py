@@ -14,6 +14,7 @@ class Staff(db.Model):
     region     = db.Column(db.String(100), nullable=True)
     manager_id = db.Column(db.String(36),  db.ForeignKey("staff.id"), nullable=True)
     lob        = db.Column(db.String(200), nullable=True)  # primary LOB(s) assigned
+    pin        = db.Column(db.String(4),    nullable=True)   # 4-digit PIN
     rating     = db.Column(db.Integer,      nullable=True)   # 1-5 star performance rating
     rating_comment = db.Column(db.Text,    nullable=True)   # performance notes
     active     = db.Column(db.Boolean,     default=True)
@@ -35,6 +36,7 @@ class Staff(db.Model):
             "region":     self.region,
             "manager_id": self.manager_id,
             "lob":        getattr(self, "lob", None),
+            "pin_set":        bool(self.pin),  # never send actual PIN to client
             "rating":         self.rating,
             "rating_comment": self.rating_comment,
             "active":     self.active,

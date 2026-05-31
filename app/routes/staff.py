@@ -4,6 +4,23 @@ from app.models.staff import Staff
 
 bp = Blueprint("staff", __name__)
 
+@bp.route("/<staff_id>/verify-pin/", methods=["POST"])
+def verify_pin(staff_id):
+    """POST /api/staff/<id>/verify-pin/  body: {pin: "1234"}"""
+    from app.models.staff import Staff
+    staff = Staff.query.get_or_404(staff_id)
+    data = request.get_json(force=True)
+    entered = str(data.get("pin", "")).strip()
+    
+    # If no PIN set, allow access (manager can set PIN later)
+    if not staff.pin:
+        return jsonify({"valid": True, "message": "No PIN set — access granted"})
+    
+    if entered == staff.pin:
+        return jsonify({"valid": True, "message": "PIN correct"})
+    else:
+        return jsonify({"valid": False, "message": "Incorrect PIN"}), 401
+
 @bp.route("/", methods=["GET"])
 def list_staff():
     """GET /api/staff  — list all active staff, optional ?region="""
@@ -45,7 +62,7 @@ def update_staff(staff_id):
     """PATCH /api/staff/<id>  — partial update"""
     s = Staff.query.get_or_404(staff_id)
     data = request.get_json(force=True)
-    for field in ["name", "phone", "email", "role", "region", "manager_id", "active", "lob", "rating", "rating_comment"]:
+    for field in ["name", "phone", "email", "role", "region", "manager_id", "active", "lob", "rating", "rating_comment", "pin"]:
         if field in data:
             setattr(s, field, data[field])
     db.session.commit()
