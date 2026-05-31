@@ -960,13 +960,24 @@ async function parseVoice() {
       })
     });
     const d = await r.json();
+    console.log('Claude response:', JSON.stringify(d));
+    if (d.error) {
+      showToast('API error: ' + d.error.message, 'error');
+      document.getElementById('micStatus').textContent = 'API error — ' + d.error.message;
+      buildParsedForm({});
+      return;
+    }
     const raw = d.content?.[0]?.text || '{}';
+    console.log('Raw text:', raw);
     const parsed = JSON.parse(raw.split('```json').join('').split('```').join('').trim());
+    console.log('Parsed fields:', JSON.stringify(parsed));
     buildParsedForm(parsed);
-    document.getElementById('micStatus').textContent = '✓ Parsed! Scroll down to review fields';
+    document.getElementById('micStatus').textContent = '✓ Parsed! Review and save below';
   } catch(e) {
-    buildParsedForm({});
+    console.error('Parse error:', e);
+    showToast('Parse failed: ' + e.message, 'error');
     document.getElementById('micStatus').textContent = 'Parse error — fill manually';
+    buildParsedForm({});
   }
 }
 
