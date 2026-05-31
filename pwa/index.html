@@ -799,33 +799,53 @@ function captureGPS() {
 async function loadStaff() {
   const data = await api('/staff/');
   if (!data) {
-    document.getElementById('staffPicker').innerHTML =
-      '<div style="color:var(--red);font-size:13px;padding:8px;">Cannot load staff — check connection</div>';
-    document.getElementById('f-staff').innerHTML =
-      '<option value="">Cannot load staff</option>';
+    const fsel = document.getElementById('f-staff');
+    if (fsel) fsel.innerHTML = '<option value="">Cannot load staff</option>';
+    const vsel2 = document.getElementById('voiceStaffSelect');
+    if (vsel2) vsel2.innerHTML = '<option value="">Cannot load staff</option>';
     return;
   }
   staffList = data.filter(s => s.role === 'field_staff');
 
-  // Staff picker (voice tab)
-  const picker = document.getElementById('staffPicker');
-  picker.innerHTML = staffList.map(s => `
-    <div class="staff-btn" id="sp-${s.id}" onclick="selectStaff('${s.id}')">
-      <div class="staff-initial">${initials(s.name)}</div>
-      ${s.name.split(' ')[0]}
-    </div>`).join('');
+  // Voice tab dropdown
+  const vsel = document.getElementById('voiceStaffSelect');
+  if (vsel) {
+    vsel.innerHTML = '<option value="">Select your name</option>' +
+      staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  }
 
-  // Staff dropdown (text tab)
+  // Text tab dropdown
   const sel = document.getElementById('f-staff');
-  sel.innerHTML = '<option value="">Select staff member</option>' +
-    staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  if (sel) {
+    sel.innerHTML = '<option value="">Select name</option>' +
+      staffList.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  }
+
+  // Restore last used staff
+  try {
+    const lastId = localStorage.getItem('lastStaffId');
+    if (lastId && staffList.find(s => s.id === lastId)) {
+      selectedStaffId = lastId;
+      if (vsel) vsel.value = lastId;
+      if (sel) sel.value = lastId;
+      // Highlight legacy picker button too
+      const btn = document.getElementById('sp-'+lastId);
+      if (btn) btn.classList.add('selected');
+    }
+  } catch(e) {}
 }
 
 function selectStaff(id) {
   selectedStaffId = id;
+  try { localStorage.setItem('lastStaffId', id); } catch(e) {}
   document.querySelectorAll('.staff-btn').forEach(b => b.classList.remove('selected'));
   const btn = document.getElementById('sp-'+id);
   if (btn) btn.classList.add('selected');
+  // Sync both dropdowns
+  const vsel = document.getElementById('voiceStaffSelect');
+  if (vsel) vsel.value = id;
+  const fsel = document.getElementById('f-staff');
+  if (fsel) fsel.value = id;
   showToast(`Logged in as ${staffList.find(s=>s.id===id)?.name||'staff'}`);
   loadFeedbackBadge();
   loadMyFU();
