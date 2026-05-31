@@ -100,7 +100,8 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 
 /* MAIN SCROLL AREA */
 .main {
-  padding: 12px 14px 80px;
+  padding: 16px 16px 80px;
+  min-height: calc(100vh - 56px);
 }
 
 /* SECTIONS */
@@ -316,7 +317,7 @@ textarea { min-height: 72px; resize: vertical; }
 .toast.error   { background: var(--red); }
 
 /* SECTION TITLE */
-.section-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
 
 /* STAFF PICKER */
 .staff-picker {
@@ -373,32 +374,6 @@ textarea { min-height: 72px; resize: vertical; }
 </style>
 </head>
 <body>
-
-<!-- NAME OVERLAY - shows on every load -->
-<div id="nameOverlay" style="display:none;position:fixed;inset:0;background:var(--green);z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
-  <div style="color:#fff;font-size:24px;font-weight:700;margin-bottom:4px;">Apex FPTS</div>
-  <div style="color:rgba(255,255,255,0.65);font-size:13px;margin-bottom:28px;">Field Performance Tracking</div>
-  <div style="background:#fff;border-radius:14px;padding:22px;width:100%;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,0.2);">
-    <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Sign in</div>
-    <div style="font-size:12px;color:#888;margin-bottom:16px;" id="overlaySubtitle">Select your name and enter your PIN</div>
-    <div style="margin-bottom:12px;">
-      <div style="font-size:11px;color:#666;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your name</div>
-      <select id="overlayStaffSelect" onchange="onOverlayNameChange()" style="width:100%;font-size:14px;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;background:#fff;">
-        <option value="">Select your name</option>
-      </select>
-    </div>
-    <div style="margin-bottom:16px;" id="pinWrap">
-      <div style="font-size:11px;color:#666;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">PIN</div>
-      <input type="password" id="overlayPin" maxlength="4" inputmode="numeric" pattern="[0-9]*"
-        placeholder="Enter 4-digit PIN"
-        style="width:100%;font-size:18px;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;letter-spacing:8px;text-align:center;"
-        onkeyup="if(event.key==='Enter') confirmName()">
-      <div style="font-size:11px;color:#aaa;margin-top:5px;text-align:center;" id="pinHint">Ask your manager for your PIN</div>
-    </div>
-    <div id="overlayError" style="color:#c0392b;font-size:12px;margin-bottom:10px;display:none;text-align:center;"></div>
-    <button id="overlayBtn" onclick="confirmName()" style="width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Continue →</button>
-  </div>
-</div>
 
 <div class="header">
   <div>
@@ -473,7 +448,7 @@ textarea { min-height: 72px; resize: vertical; }
     </div>
 
     <div id="parsedSection" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:16px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <button class="btn" onclick="document.getElementById('parsedSection').style.display='none'" style="padding:6px 10px;">← Back</button>
         <div style="font-weight:600;font-size:14px;">Log visit</div>
       </div>
@@ -602,12 +577,13 @@ textarea { min-height: 72px; resize: vertical; }
           <div class="field-label">Notes / outcome <span class="required-star">*</span></div>
           <textarea id="f-notes" placeholder="Any other observations"></textarea>
         </div>
-        <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <button class="btn btn-primary" onclick="submitEntry('text')" style="flex:1;padding:10px;">Save visit</button>
-          <button class="btn" onclick="clearTextForm()" style="padding:10px 16px;">Clear</button>
-        </div>
       </div>
     </div>
+    <button class="btn btn-primary" onclick="submitEntry('text')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Save visit
+    </button>
+    <button class="btn" onclick="clearTextForm()" style="margin-top:8px;">Clear</button>
   </div>
 
   <!-- MY VISITS -->
@@ -631,11 +607,11 @@ textarea { min-height: 72px; resize: vertical; }
 
   <!-- CALENDAR -->
   <div id="tab-cal" class="section active">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div class="section-title" style="margin-bottom:0;">My Calendar</div>
       <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="calToday()">Today</button>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
       <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(-1)">&#8592;</button>
       <div style="flex:1;text-align:center;font-weight:600;font-size:15px;" id="calMonthLabel"></div>
       <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(1)">&#8594;</button>
@@ -662,7 +638,7 @@ textarea { min-height: 72px; resize: vertical; }
 
   <!-- FEEDBACK INBOX -->
   <div id="tab-fb" class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <div class="section-title" style="margin-bottom:0;">Feedback from Manager</div>
       <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="markAllRead()">Mark all read</button>
     </div>
@@ -746,9 +722,8 @@ window.addEventListener('load', async () => {
   captureGPS();
   await loadStaff();
   await loadClients();
-  const fd = document.getElementById('f-date');
+  var fd = document.getElementById('f-date');
   if (fd) fd.value = new Date().toISOString().slice(0,10);
-  // Always show name overlay on load
   showNameOverlay();
 });
 
@@ -871,11 +846,9 @@ function selectStaff(id) {
   if (vsel) vsel.value = id;
   const fsel = document.getElementById('f-staff');
   if (fsel) fsel.value = id;
-  showToast('Logged in as ' + ((staffList.find(function(s){return s.id===id;})||{name:'staff'}).name));
+  showToast(`Logged in as ${staffList.find(s=>s.id===id)?.name||'staff'}`);
   loadFeedbackBadge();
   loadMyFU();
-  // Reload calendar with new staff
-  if (currentTab === 'cal') loadCal();
 }
 
 async function loadClients() {
@@ -894,14 +867,13 @@ async function loadClients() {
 // ── NAVIGATION ────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.nav-btn').forEach((b,i) =>
-    b.classList.toggle('active', ['voice','text','visits','fu','cal','fb'][i]===name));
+    b.classList.toggle('active', ['voice','text','visits','fu','cal','fb'][i]===name || (name==='text' && !['voice','visits','fu','cal','fb'].includes(name) && i===1)));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   currentTab = name;
   if (name==='visits') loadMyVisits();
   if (name==='fu') loadMyFU();
   if (name==='cal') loadCal();
-  if (name==='text') { document.getElementById('f-date').value = new Date().toISOString().slice(0,10); captureGPS(); }
   if (name==='fb') loadFeedback();
 }
 
@@ -1368,28 +1340,30 @@ function calChangeMonth(d) {
   calMonth += d;
   if (calMonth > 11) { calMonth = 0; calYear++; }
   if (calMonth < 0)  { calMonth = 11; calYear--; }
-  document.getElementById('calDayPanel').innerHTML = '';
   loadCal();
+  document.getElementById('calDayPanel').innerHTML = '';
 }
 
 async function loadCal() {
-  if (!selectedStaffId) return; // overlay handles this
+  const staffId = selectedStaffId || (staffList[0]?.id);
+  if (!staffId) return;
 
   const months = ['January','February','March','April','May','June',
-    'July','August','September','October','November','December'];
+                  'July','August','September','October','November','December'];
   document.getElementById('calMonthLabel').textContent = months[calMonth] + ' ' + calYear;
 
-  const mm = String(calMonth+1).padStart(2,'0');
-  const from = calYear + '-' + mm + '-01';
-  const to   = calYear + '-' + mm + '-31';
+  const mm   = String(calMonth+1).padStart(2,'0');
+  const from = `${calYear}-${mm}-01`;
+  const to   = `${calYear}-${mm}-31`;
 
   const [visits, fu] = await Promise.all([
-    api('/visits/?staff_id=' + selectedStaffId + '&from=' + from + '&to=' + to),
-    api('/follow-ups/?staff_id=' + selectedStaffId + '&from=' + from + '&to=' + to)
+    api(`/visits/?staff_id=${staffId}&from=${from}&to=${to}`),
+    api(`/follow-ups/?staff_id=${staffId}&from=${from}&to=${to}`)
   ]);
 
   calVisits = visits || [];
   calFU     = fu || [];
+
   renderCalGrid();
 }
 
@@ -1399,26 +1373,27 @@ function renderCalGrid() {
   const first = new Date(calYear, calMonth, 1).getDay();
   const days  = new Date(calYear, calMonth+1, 0).getDate();
 
-  var html = '';
+  let html = '';
 
-  for (var i=0; i<first; i++) {
-    html += '<div style="min-height:48px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg);opacity:0.4;"></div>';
+  // Empty cells
+  for (let i=0; i<first; i++) {
+    html += '<div style="min-height:52px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg);opacity:0.4;"></div>';
   }
 
-  for (var d=1; d<=days; d++) {
-    var ds = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    var isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
-    var dayVisits = calVisits.filter(function(v){ return v.visit_date === ds; });
-    var dayFU     = calFU.filter(function(f){ return f.due_date === ds; });
+  for (let d=1; d<=days; d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
+    const dayVisits = calVisits.filter(v => v.visit_date === ds);
+    const dayFU     = calFU.filter(f => f.due_date === ds);
+    const hasItems  = dayVisits.length || dayFU.length;
 
-    var bg = isToday ? 'background:#e8f0eb;' : 'background:var(--surface);';
-    html += '<div onclick="showCalDay('' + ds + '')" style="min-height:48px;padding:3px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;' + bg + '">';
-    html += '<div style="font-size:11px;font-weight:' + (isToday?'700':'500') + ';color:' + (isToday?'var(--green)':'var(--text)') + ';margin-bottom:2px;">' + d + '</div>';
-    dayVisits.slice(0,2).forEach(function(v) {
-      html += '<div style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:2px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + (v.client_name||'').slice(0,10) + '</div>';
+    html += `<div onclick="showCalDay('${ds}')" style="min-height:52px;padding:4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;background:${isToday?'var(--green-lt)':'var(--surface)'};${hasItems?'':''}">`;
+    html += `<div style="font-size:11px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--green)':'var(--text)'};margin-bottom:2px;">${d}</div>`;
+    dayVisits.slice(0,2).forEach(v => {
+      html += `<div style="font-size:9px;background:var(--blue-lt);color:var(--blue);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${(v.client_name||'').slice(0,10)}</div>`;
     });
-    dayFU.slice(0,1).forEach(function(f) {
-      html += '<div style="font-size:9px;background:#fee2e2;color:#991b1b;border-radius:2px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">↻ ' + (f.client_name||'').slice(0,8) + '</div>';
+    dayFU.slice(0,1).forEach(f => {
+      html += `<div style="font-size:9px;background:var(--red-lt);color:var(--red);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">↻ ${(f.client_name||'').slice(0,8)}</div>`;
     });
     html += '</div>';
   }
@@ -1427,141 +1402,38 @@ function renderCalGrid() {
 }
 
 function showCalDay(ds) {
-  var dayVisits = calVisits.filter(function(v){ return v.visit_date === ds; });
-  var dayFU     = calFU.filter(function(f){ return f.due_date === ds; });
-  var panel     = document.getElementById('calDayPanel');
+  const dayVisits = calVisits.filter(v => v.visit_date === ds);
+  const dayFU     = calFU.filter(f => f.due_date === ds);
+  const panel     = document.getElementById('calDayPanel');
 
-  var d = new Date(ds+'T00:00:00');
-  var label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  if (!dayVisits.length && !dayFU.length) { panel.innerHTML = ''; return; }
 
-  var html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:10px;">';
-  html += '<div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">';
-  html += '<div style="font-weight:600;font-size:13px;">' + label + '</div>';
-  html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="showLogForm('' + ds + '')">+ Log visit</button>';
-  html += '</div>';
+  const d = new Date(ds+'T00:00:00');
+  const label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
 
-  if (!dayVisits.length && !dayFU.length) {
-    html += '<div style="padding:12px 14px;font-size:13px;color:var(--text3);">No activity. Tap + Log visit.</div>';
-  }
+  let html = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
+    <div style="padding:10px 14px;background:var(--bg);font-weight:600;font-size:13px;border-bottom:1px solid var(--border);">${label}</div>`;
 
-  dayVisits.forEach(function(v) {
-    html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-    html += '<div style="font-weight:500;font-size:13px;">' + (v.client_name||'—') + '</div>';
-    html += '<div style="font-size:11px;color:var(--text2);">' + (v.time_in||'') + (v.time_out?' – '+v.time_out:'') + '</div></div>';
-    html += '<div style="font-size:12px;color:var(--text2);">' + (v.visit_type||'') + (v.rep_met?' · '+v.rep_met:'') + '</div>';
-    if (v.purpose) html += '<div style="font-size:12px;color:var(--text2);margin-top:2px;">' + v.purpose.slice(0,80) + '</div>';
-    html += '</div>';
+  dayVisits.forEach(v => {
+    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="font-weight:500;font-size:13px;">${v.client_name||'—'}</div>
+        <div style="font-size:11px;color:var(--text2);">${v.time_in||''}${v.time_in&&v.time_out?' – ':''}${v.time_out||''}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);">${v.visit_type} ${v.rep_met?'· '+v.rep_met:''}</div>
+      ${v.purpose?`<div style="font-size:12px;color:var(--text2);margin-top:3px;">${v.purpose.slice(0,100)}</div>`:''}
+    </div>`;
   });
 
-  dayFU.forEach(function(f) {
-    html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:#fff5f5;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-    html += '<div style="font-weight:500;font-size:13px;color:var(--red);">↻ ' + (f.client_name||'') + '</div>';
-    html += '<button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="showLogForm('' + ds + '','' + (f.client_id||'') + '')">Log now</button>';
-    html += '</div>';
-    if (f.notes) html += '<div style="font-size:12px;color:var(--red);margin-top:2px;">' + f.notes + '</div>';
-    html += '</div>';
+  dayFU.forEach(f => {
+    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--red-lt);">
+      <div style="font-weight:500;font-size:13px;color:var(--red);">↻ Follow-up: ${f.client_name}</div>
+      ${f.notes?`<div style="font-size:12px;color:var(--red);margin-top:3px;opacity:0.8;">${f.notes}</div>`:''}
+    </div>`;
   });
 
   html += '</div>';
   panel.innerHTML = html;
-  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-
-function showLogForm(ds, preClientId) {
-  var clientOpts = clientList.map(function(c) {
-    return '<option value="' + c.id + '"' + (c.id===preClientId?' selected':'') + '>' + c.company_name + '</option>';
-  }).join('');
-  var lobOpts = ['Compressed Air','Power Technique','Mining Equipment','Industrial Bearings',
-    'Office Automation','Motors & Fans','Material Handling','Printing','Computers & IT']
-    .map(function(l){ return '<option>' + l + '</option>'; }).join('');
-  var typeOpts = ['Follow-up','Sales call','Prospecting','Service visit','Demo','Collection','Delivery','Complaint']
-    .map(function(t){ return '<option>' + t + '</option>'; }).join('');
-
-  var html = '<div id="calLogForm" style="background:var(--surface);border:2px solid var(--green);border-radius:var(--r);margin-top:10px;">';
-  html += '<div style="padding:10px 14px;background:var(--green);display:flex;justify-content:space-between;align-items:center;">';
-  html += '<div style="font-weight:600;font-size:13px;color:#fff;">Log visit — ' + ds + '</div>';
-  html += '<button onclick="document.getElementById('calLogForm').remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
-  html += '</div>';
-  html += '<div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
-
-  var f = function(label, id, input) {
-    return '<div><div style="font-size:11px;color:var(--text3);margin-bottom:3px;">' + label + '</div>' + input + '</div>';
-  };
-  var inp = function(id, type, ph) {
-    return '<input type="' + type + '" id="' + id + '" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;">';
-  };
-  var sel = function(id, opts) {
-    return '<select id="' + id + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;">' + opts + '</select>';
-  };
-  var ta = function(id, ph) {
-    return '<textarea id="' + id + '" rows="2" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;resize:none;"></textarea>';
-  };
-
-  html += '<div style="grid-column:1/-1;">' + f('Client *', 'cal-client', sel('cal-client', '<option value="">Select client</option>' + clientOpts)) + '</div>';
-  html += f('Visit type *', 'cal-type', sel('cal-type', typeOpts));
-  html += f('LOB *', 'cal-lob', sel('cal-lob', '<option value="">Select LOB</option>' + lobOpts));
-  html += f('Time in *', 'cal-tin', inp('cal-tin', 'time'));
-  html += f('Time out *', 'cal-tout', inp('cal-tout', 'time'));
-  html += '<div style="grid-column:1/-1;">' + f('Rep met (name, designation) *', 'cal-rep', inp('cal-rep', 'text', 'e.g. Suresh Nair, GM')) + '</div>';
-  html += '<div style="grid-column:1/-1;">' + f('Purpose *', 'cal-purpose', ta('cal-purpose', 'Main reason for visit')) + '</div>';
-  html += '<div style="grid-column:1/-1;">' + f('Notes / outcome *', 'cal-notes', ta('cal-notes', 'What happened, client sentiment, next steps')) + '</div>';
-  html += f('Priority', 'cal-priority', sel('cal-priority', '<option>Medium</option><option>High</option><option>Low</option>'));
-  html += f('Next follow-up', 'cal-followup', inp('cal-followup', 'date'));
-  html += '</div>';
-  html += '<div style="padding:10px 14px;border-top:1px solid var(--border);">';
-  html += '<button class="btn btn-primary" id="calSaveBtn" onclick="saveCalVisit('' + ds + '')" style="width:100%;padding:11px;font-size:14px;">Save visit</button>';
-  html += '</div></div>';
-
-  var panel = document.getElementById('calDayPanel');
-  var existing = document.getElementById('calLogForm');
-  if (existing) existing.remove();
-  panel.innerHTML = panel.innerHTML + html;
-  document.getElementById('calLogForm').scrollIntoView({behavior:'smooth'});
-}
-
-async function saveCalVisit(ds) {
-  var g = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
-  var errors = [];
-  if (!g('cal-client'))  errors.push('Client');
-  if (!g('cal-lob'))     errors.push('LOB');
-  if (!g('cal-tin'))     errors.push('Time in');
-  if (!g('cal-tout'))    errors.push('Time out');
-  if (!g('cal-rep'))     errors.push('Rep met');
-  if (!g('cal-purpose')) errors.push('Purpose');
-  if (!g('cal-notes'))   errors.push('Notes');
-  if (errors.length) { showToast('Missing: ' + errors.join(', '), 'error'); return; }
-
-  var btn = document.getElementById('calSaveBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-
-  var payload = {
-    staff_id: selectedStaffId, client_id: g('cal-client'),
-    visit_date: ds, visit_type: g('cal-type'), lob: g('cal-lob'),
-    time_in: g('cal-tin'), time_out: g('cal-tout'), rep_met: g('cal-rep'),
-    purpose: g('cal-purpose'), notes: g('cal-notes'), priority: g('cal-priority'),
-    source: 'text', action_items: [], follow_up_date: g('cal-followup') || null,
-    prev_visit_summary: '', help_needed: '',
-  };
-
-  try {
-    var r = await fetch(API + '/visits/', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if (r.ok) {
-      showToast('Visit saved!');
-      document.getElementById('calDayPanel').innerHTML = '';
-      loadCal();
-    } else {
-      showToast('Save failed', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = 'Save visit'; }
-    }
-  } catch(e) {
-    showToast('Network error', 'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'Save visit'; }
-  }
 }
 
 
@@ -1637,62 +1509,59 @@ async function loadFeedbackBadge() {
 
 // ── NAME OVERLAY ─────────────────────────────
 function showNameOverlay() {
-  const overlay = document.getElementById('nameOverlay');
-  overlay.style.display = 'flex';
-
-  const sel = document.getElementById('overlayStaffSelect');
+  var sel = document.getElementById('overlayStaffSelect');
   sel.innerHTML = '<option value="">Select your name</option>' +
     staffList.map(function(s) {
       return '<option value="' + s.id + '">' + s.name + '</option>';
     }).join('');
 
-  // Pre-select saved name
-  const lastId = localStorage.getItem('lastStaffId');
-  if (lastId && staffList.find(function(s){ return s.id === lastId; })) {
-    sel.value = lastId;
-    var staffMember = staffList.find(function(s){ return s.id === lastId; });
-    document.getElementById('overlaySubtitle').textContent = 'Welcome back, ' + staffMember.name.split(' ')[0];
-    if (!staffMember.pin_set) {
-      document.getElementById('pinHint').textContent = 'No PIN set — tap Continue';
+  // Restore saved name
+  try {
+    var lastId = localStorage.getItem('lastStaffId');
+    if (lastId && staffList.find(function(s){ return s.id===lastId; })) {
+      sel.value = lastId;
+      onOverlayNameChange();
     }
-  }
+  } catch(e) {}
+
+  document.getElementById('nameOverlay').style.display = 'flex';
 }
 
 function onOverlayNameChange() {
   var id = document.getElementById('overlayStaffSelect').value;
-  var staffMember = staffList.find(function(s){ return s.id === id; });
-  if (staffMember && !staffMember.pin_set) {
-    document.getElementById('pinHint').textContent = 'No PIN set — tap Continue';
-    document.getElementById('overlayPin').placeholder = 'No PIN required';
+  var s = staffList.find(function(x){ return x.id===id; });
+  var pinRow = document.getElementById('pinRow');
+  if (s && s.pin_set) {
+    pinRow.style.display = 'block';
   } else {
-    document.getElementById('pinHint').textContent = 'Ask your manager for your PIN';
-    document.getElementById('overlayPin').placeholder = 'Enter 4-digit PIN';
+    pinRow.style.display = 'none';
+    document.getElementById('overlayPin').value = '';
   }
-  document.getElementById('overlayError').style.display = 'none';
+  document.getElementById('overlayMsg').style.display = 'none';
 }
 
+document.getElementById('overlayStaffSelect').addEventListener('change', onOverlayNameChange);
+document.getElementById('overlayPin').addEventListener('keyup', function(e) {
+  if (e.key === 'Enter') confirmName();
+});
+
 async function confirmName() {
-  const sel = document.getElementById('overlayStaffSelect');
-  const id = sel.value;
-  const pin = document.getElementById('overlayPin').value.trim();
-  const errEl = document.getElementById('overlayError');
-  const btn = document.getElementById('overlayBtn');
+  var id = document.getElementById('overlayStaffSelect').value;
+  var pin = document.getElementById('overlayPin').value.trim();
+  var msg = document.getElementById('overlayMsg');
+  var btn = document.getElementById('overlayBtn');
 
   if (!id) {
-    sel.style.border = '2px solid #c0392b';
-    errEl.textContent = 'Please select your name';
-    errEl.style.display = 'block';
+    msg.textContent = 'Please select your name';
+    msg.style.display = 'block';
     return;
   }
 
-  var staffMember = staffList.find(function(s){ return s.id === id; });
-
-  // If staff has PIN set, verify it
-  if (staffMember && staffMember.pin_set) {
+  var s = staffList.find(function(x){ return x.id===id; });
+  if (s && s.pin_set) {
     if (!pin) {
-      document.getElementById('overlayPin').style.border = '2px solid #c0392b';
-      errEl.textContent = 'Please enter your PIN';
-      errEl.style.display = 'block';
+      msg.textContent = 'Please enter your PIN';
+      msg.style.display = 'block';
       return;
     }
     btn.disabled = true;
@@ -1704,44 +1573,62 @@ async function confirmName() {
         body: JSON.stringify({pin: pin})
       });
       if (!r.ok) {
-        errEl.textContent = 'Incorrect PIN — try again';
-        errEl.style.display = 'block';
+        msg.textContent = 'Incorrect PIN — try again';
+        msg.style.display = 'block';
         document.getElementById('overlayPin').value = '';
-        document.getElementById('overlayPin').focus();
         btn.disabled = false;
         btn.textContent = 'Continue →';
         return;
       }
     } catch(e) {
-      errEl.textContent = 'Network error — try again';
-      errEl.style.display = 'block';
+      msg.textContent = 'Network error';
+      msg.style.display = 'block';
       btn.disabled = false;
       btn.textContent = 'Continue →';
       return;
     }
   }
 
-  // PIN verified (or not required)
+  // Success
   selectedStaffId = id;
   try { localStorage.setItem('lastStaffId', id); } catch(e) {}
-
   ['voiceStaffSelect','f-staff'].forEach(function(eid) {
     var el = document.getElementById(eid);
     if (el) el.value = id;
   });
 
   document.getElementById('nameOverlay').style.display = 'none';
+  btn.disabled = false;
+  btn.textContent = 'Continue →';
+
   loadCal();
   loadMyVisits();
   loadMyFU();
   loadFeedbackBadge();
 
-  var name = (staffMember||{name:'staff'}).name;
+  var name = (s||{name:'staff'}).name;
   showToast('Welcome, ' + name.split(' ')[0] + '!');
-  btn.disabled = false;
-  btn.textContent = 'Continue →';
 }
 
 </script>
+
+<!-- NAME OVERLAY -->
+<div id="nameOverlay" style="position:fixed;inset:0;background:#1a472a;z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:24px;display:flex;">
+  <div style="color:#fff;font-size:26px;font-weight:700;margin-bottom:4px;">Apex FPTS</div>
+  <div style="color:rgba(255,255,255,0.6);font-size:13px;margin-bottom:32px;">Field Performance Tracking</div>
+  <div style="background:#fff;border-radius:14px;padding:22px;width:100%;max-width:320px;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;">Who are you?</div>
+    <select id="overlayStaffSelect" style="width:100%;font-size:15px;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:10px;">
+      <option value="">Select your name</option>
+    </select>
+    <div id="pinRow" style="margin-bottom:12px;display:none;">
+      <input type="password" id="overlayPin" maxlength="4" inputmode="numeric" placeholder="Enter 4-digit PIN"
+        style="width:100%;font-size:16px;padding:10px;border:1.5px solid #ddd;border-radius:8px;text-align:center;letter-spacing:8px;">
+    </div>
+    <div id="overlayMsg" style="font-size:12px;color:#c0392b;margin-bottom:10px;display:none;text-align:center;"></div>
+    <button id="overlayBtn" onclick="confirmName()" style="width:100%;padding:13px;background:#1a472a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Continue →</button>
+  </div>
+</div>
+
 </body>
 </html>
