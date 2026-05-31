@@ -389,7 +389,7 @@ textarea { min-height: 72px; resize: vertical; }
 <div class="main">
 
   <!-- VOICE LOG -->
-  <div id="tab-voice" class="section active">
+  <div id="tab-voice" class="section">
     <div id="staffPickerWrap">
       <div class="section-title">Who are you?</div>
       <div class="staff-picker" id="staffPicker"></div>
@@ -478,32 +478,34 @@ textarea { min-height: 72px; resize: vertical; }
   </div>
 
   <!-- TEXT LOG -->
-  <div id="tab-text" class="section">
-    <div class="section-title">Log a visit</div>
+  <div id="tab-text" class="section active">
     <div class="validation-banner" id="textValidationBanner"></div>
-
-    <div id="gpsBarText" class="gps-bar" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-      </svg>
-      <span id="gpsTextForm">Capturing location…</span>
-    </div>
 
     <div class="card">
       <div class="card-body">
-        <div class="field">
-          <div class="field-label">Staff name <span class="req">*</span></div>
-          <select id="f-staff" onchange="clearFieldError('f-staff')"><option value="">Select staff member</option></select>
-        </div>
-        <div class="row2">
-          <div class="field">
+        <!-- Compact top row: staff + date + priority + GPS in one line -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
+          <div class="field" style="margin:0;">
+            <div class="field-label">Staff <span class="req">*</span></div>
+            <select id="f-staff" onchange="clearFieldError('f-staff')"><option value="">Select name</option></select>
+          </div>
+          <div class="field" style="margin:0;">
             <div class="field-label">Date</div>
             <input type="date" id="f-date">
           </div>
-          <div class="field">
+          <div class="field" style="margin:0;">
             <div class="field-label">Priority</div>
             <select id="f-priority"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select>
           </div>
+          <div class="field" style="margin:0;">
+            <div class="field-label">📍 Location GPS</div>
+            <div id="gpsBarText" class="gps-bar" style="font-size:11px;padding:6px 8px;margin:0;border-radius:6px;display:none;">
+              <span id="gpsTextForm">Capturing…</span>
+            </div>
+            <div id="gpsBarTextStatic" style="font-size:11px;color:var(--text3);padding:6px 0;">Auto-captured on save</div>
+          </div>
+        </div>
+        <!-- removed dup -->
         </div>
 
         <div class="field">
@@ -646,14 +648,14 @@ textarea { min-height: 72px; resize: vertical; }
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-btn active" onclick="switchTab('voice')">
+  <button class="nav-btn" onclick="switchTab('voice')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
     </svg>
     Voice
   </button>
-  <button class="nav-btn" onclick="switchTab('text')">
+  <button class="nav-btn active" onclick="switchTab('text')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
       <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
@@ -702,7 +704,7 @@ let selectedStaffId = '';
 let isRec = false, recog = null, fullTx = '';
 let gpsCoords = null;
 let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
-let currentTab = 'voice';
+let currentTab = 'text';
 
 // ── INIT ─────────────────────────────────────
 window.addEventListener('load', async () => {
@@ -844,7 +846,7 @@ async function loadClients() {
 // ── NAVIGATION ────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.nav-btn').forEach((b,i) =>
-    b.classList.toggle('active', ['voice','text','visits','fu','cal','fb'][i]===name));
+    b.classList.toggle('active', ['voice','text','visits','fu','cal','fb'][i]===name || (name==='text' && !['voice','visits','fu','cal','fb'].includes(name) && i===1)));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   currentTab = name;
