@@ -417,7 +417,7 @@ textarea { min-height: 72px; resize: vertical; }
           </button>
           <button class="btn btn-primary" style="flex:2;display:flex;align-items:center;gap:6px;justify-content:center;" onclick="parseVoice()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3"/></svg>
-            Parse with AI
+            Fill in fields
           </button>
           <button class="btn" style="padding:8px 12px;" onclick="resetVoice()" title="Clear and re-record">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.13"/></svg>
@@ -449,11 +449,14 @@ textarea { min-height: 72px; resize: vertical; }
     <div id="parsedSection" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:16px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <button class="btn" onclick="document.getElementById('parsedSection').style.display='none'" style="padding:6px 10px;">← Back</button>
-        <div style="font-weight:600;font-size:14px;">Review parsed fields</div>
-        <div style="font-size:11px;color:var(--text3);">edit if needed</div>
+        <div style="font-weight:600;font-size:14px;">Log visit</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Your recording:</div>
+        <div id="transcriptRef" style="font-size:13px;line-height:1.6;color:var(--text);"></div>
       </div>
       <div class="card">
-        <div class="card-head">Fields from your recording</div>
+        <div class="card-head">Fill in visit details</div>
         <div class="card-body" id="parsedFormBody"></div>
       </div>
       <button class="btn btn-primary" onclick="submitEntry('voice')">
@@ -468,7 +471,7 @@ textarea { min-height: 72px; resize: vertical; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
         </svg>
-        Parse with AI
+        Fill in fields
       </button>
       <button class="btn" onclick="resetVoice()" style="margin-top:8px;">Re-record</button>
     </div>
@@ -692,9 +695,7 @@ textarea { min-height: 72px; resize: vertical; }
 <script>
 const API = 'https://fats-production.up.railway.app/api';
 const BASE = API;
-const SYSTEM_PROMPT = `You parse a spoken field visit log into JSON for Apex Corporation India Pvt Ltd (industrial equipment company in Jamshedpur).
-Extract: staff (string), client (company name), location (area/city), visitType (Prospecting/Sales call/Follow-up/Service visit/Demo/Collection/Delivery/Complaint/Other), lob (one of: Compressed Air/Power Technique/Mining Equipment/Industrial Bearings/Office Automation/Motors & Fans/Material Handling/Printing/Computers & IT — infer from context e.g. compressor=Compressed Air, rock drill=Mining Equipment, Canon=Office Automation, laptop=Computers & IT), repMet (name+designation), timeIn (HH:MM), timeOut (HH:MM), purpose, prevVisitSummary, actionItems (string), helpNeeded (string), followUpDate (YYYY-MM-DD), priority (High/Medium/Low), notes.
-Respond ONLY with valid JSON, no markdown. Today: ${new Date().toISOString().slice(0,10)}.`;
+
 
 let staffList = [], clientList = [];
 let selectedStaffId = '';
@@ -940,45 +941,10 @@ function stopRec() {
   }
 }
 
-async function parseVoice() {
-  const txt = (fullTx || document.getElementById('transcriptBox').textContent).trim();
-  if (!txt) return;
-  document.getElementById('micStatus').innerHTML = '<span class="spinner"></span> Parsing…';
-  document.getElementById('parseActions').style.display = 'none';
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: txt }]
-      })
-    });
-    const d = await r.json();
-    console.log('Claude response:', JSON.stringify(d));
-    if (d.error) {
-      showToast('API error: ' + d.error.message, 'error');
-      document.getElementById('micStatus').textContent = 'API error — ' + d.error.message;
-      buildParsedForm({});
-      return;
-    }
-    const raw = d.content?.[0]?.text || '{}';
-    console.log('Raw text:', raw);
-    const parsed = JSON.parse(raw.split('```json').join('').split('```').join('').trim());
-    console.log('Parsed fields:', JSON.stringify(parsed));
-    buildParsedForm(parsed);
-    document.getElementById('micStatus').textContent = '✓ Parsed! Review and save below';
-  } catch(e) {
-    console.error('Parse error:', e);
-    showToast('Parse failed: ' + e.message, 'error');
-    document.getElementById('micStatus').textContent = 'Parse error — fill manually';
-    buildParsedForm({});
-  }
+function parseVoice() {
+  // Just open the form with transcript shown at top — staff fill fields manually
+  buildParsedForm({});
+  document.getElementById('micStatus').textContent = '✓ Transcript saved — fill in the fields below';
 }
 
 function buildParsedForm(data) {
@@ -1032,10 +998,14 @@ function buildParsedForm(data) {
   });
 
   document.getElementById('parsedFormBody').innerHTML = html;
+  // Show transcript at top for reference
+  const txRef = document.getElementById('transcriptRef');
+  if (txRef) {
+    const tx = (fullTx || document.getElementById('transcriptBox').textContent || '').trim();
+    txRef.textContent = tx || '(no transcript)';
+  }
   const ps = document.getElementById('parsedSection');
   ps.style.display = 'block';
-  // Scroll to the parsed form
-  setTimeout(() => ps.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
 function replayTranscript() {
