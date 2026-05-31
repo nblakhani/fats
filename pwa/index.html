@@ -100,8 +100,7 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 
 /* MAIN SCROLL AREA */
 .main {
-  padding: 16px 16px 80px;
-  min-height: calc(100vh - 56px);
+  padding: 10px 12px 80px;
 }
 
 /* SECTIONS */
@@ -317,7 +316,7 @@ textarea { min-height: 72px; resize: vertical; }
 .toast.error   { background: var(--red); }
 
 /* SECTION TITLE */
-.section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+.section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
 
 /* STAFF PICKER */
 .staff-picker {
@@ -577,13 +576,12 @@ textarea { min-height: 72px; resize: vertical; }
           <div class="field-label">Notes / outcome <span class="required-star">*</span></div>
           <textarea id="f-notes" placeholder="Any other observations"></textarea>
         </div>
+        <div style="display:flex;gap:8px;padding-top:10px;margin-top:4px;border-top:1px solid var(--border);">
+          <button class="btn btn-primary" onclick="submitEntry('text')" style="flex:1;padding:10px;">Save visit</button>
+          <button class="btn" onclick="clearTextForm()" style="padding:10px 14px;">Clear</button>
+        </div>
       </div>
     </div>
-    <button class="btn btn-primary" onclick="submitEntry('text')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-      Save visit
-    </button>
-    <button class="btn" onclick="clearTextForm()" style="margin-top:8px;">Clear</button>
   </div>
 
   <!-- MY VISITS -->
@@ -1406,12 +1404,16 @@ function showCalDay(ds) {
   const dayFU     = calFU.filter(f => f.due_date === ds);
   const panel     = document.getElementById('calDayPanel');
 
-  if (!dayVisits.length && !dayFU.length) { panel.innerHTML = ''; return; }
+  // always show panel even if empty
 
   const d = new Date(ds+'T00:00:00');
   const label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
 
   let html = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
+    <div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
+      <div style="font-weight:600;font-size:13px;">${label}</div>
+      <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="showLogForm('${ds}')">+ Log visit</button>
+    </div>
     <div style="padding:10px 14px;background:var(--bg);font-weight:600;font-size:13px;border-bottom:1px solid var(--border);">${label}</div>`;
 
   dayVisits.forEach(v => {
@@ -1435,6 +1437,93 @@ function showCalDay(ds) {
   html += '</div>';
   panel.innerHTML = html;
 }
+
+function showLogForm(ds, preClientId) {
+  var panel = document.getElementById('calDayPanel');
+  var existing = document.getElementById('calLogForm');
+  if (existing) existing.remove();
+
+  var clientOpts = clientList.map(function(c) {
+    return '<option value="' + c.id + '"' + (c.id===preClientId?' selected':'') + '>' + c.company_name + '</option>';
+  }).join('');
+
+  var lobOpts = ['Compressed Air','Power Technique','Mining Equipment','Industrial Bearings',
+    'Office Automation','Motors & Fans','Material Handling','Printing','Computers & IT']
+    .map(function(l){ return '<option>' + l + '</option>'; }).join('');
+
+  var html = '<div id="calLogForm" style="background:var(--surface);border:2px solid #1a472a;border-radius:10px;margin-top:10px;">';
+  html += '<div style="padding:10px 14px;background:#1a472a;display:flex;justify-content:space-between;align-items:center;">';
+  html += '<div style="color:#fff;font-weight:600;font-size:13px;">Log visit — ' + ds + '</div>';
+  html += '<button onclick="document.getElementById('calLogForm').remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
+  html += '</div><div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+
+  var inp = function(id, type, ph) { return '<input type="' + type + '" id="' + id + '" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
+  var sel = function(id, opts) { return '<select id="' + id + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">' + opts + '</select>'; };
+  var ta  = function(id, ph) { return '<textarea id="' + id + '" rows="2" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;resize:none;"></textarea>'; };
+  var row = function(label, input, full) { return '<div' + (full?' style="grid-column:1/-1;"':'') + '><div style="font-size:11px;color:#666;margin-bottom:3px;">' + label + '</div>' + input + '</div>'; };
+
+  html += row('Client *', sel('cal-client', '<option value="">Select client</option>' + clientOpts), true);
+  html += row('Visit type *', sel('cal-type', '<option>Follow-up</option><option>Sales call</option><option>Prospecting</option><option>Service visit</option><option>Demo</option><option>Collection</option>'));
+  html += row('LOB *', sel('cal-lob', '<option value="">LOB</option>' + lobOpts));
+  html += row('Time in *', inp('cal-tin', 'time'));
+  html += row('Time out *', inp('cal-tout', 'time'));
+  html += row('Rep met *', inp('cal-rep', 'text', 'Name, Designation'), true);
+  html += row('Purpose *', ta('cal-purpose', 'Reason for visit'), true);
+  html += row('Notes *', ta('cal-notes', 'Outcome / observations'), true);
+  html += row('Priority', sel('cal-priority', '<option>Medium</option><option>High</option><option>Low</option>'));
+  html += row('Follow-up date', inp('cal-followup', 'date'));
+  html += '</div><div style="padding:10px 14px;border-top:1px solid #eee;">';
+  html += '<button id="calSaveBtn" class="btn btn-primary" onclick="saveCalVisit('' + ds + '')" style="width:100%;padding:11px;">Save visit</button>';
+  html += '</div></div>';
+
+  panel.innerHTML = panel.innerHTML + html;
+  document.getElementById('calLogForm').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function saveCalVisit(ds) {
+  var g = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var errors = [];
+  if (!g('cal-client'))  errors.push('Client');
+  if (!g('cal-lob'))     errors.push('LOB');
+  if (!g('cal-tin'))     errors.push('Time in');
+  if (!g('cal-tout'))    errors.push('Time out');
+  if (!g('cal-rep'))     errors.push('Rep met');
+  if (!g('cal-purpose')) errors.push('Purpose');
+  if (!g('cal-notes'))   errors.push('Notes');
+  if (errors.length) { showToast('Missing: ' + errors.slice(0,3).join(', '), 'error'); return; }
+
+  var btn = document.getElementById('calSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  var payload = {
+    staff_id: selectedStaffId, client_id: g('cal-client'),
+    visit_date: ds, visit_type: g('cal-type'), lob: g('cal-lob'),
+    time_in: g('cal-tin'), time_out: g('cal-tout'), rep_met: g('cal-rep'),
+    purpose: g('cal-purpose'), notes: g('cal-notes'), priority: g('cal-priority'),
+    source: 'text', action_items: [],
+    follow_up_date: g('cal-followup') || null,
+    prev_visit_summary: '', help_needed: '',
+  };
+
+  try {
+    var r = await fetch(API + '/visits/', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      showToast('Visit saved!');
+      document.getElementById('calDayPanel').innerHTML = '';
+      loadCal();
+    } else {
+      showToast('Save failed — check all fields', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = 'Save visit'; }
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Save visit'; }
+  }
+}
+
 
 
 // ── FEEDBACK INBOX ────────────────────────────
@@ -1510,6 +1599,10 @@ async function loadFeedbackBadge() {
 // ── NAME OVERLAY ─────────────────────────────
 function showNameOverlay() {
   var sel = document.getElementById('overlayStaffSelect');
+  sel.onchange = onOverlayNameChange;
+  document.getElementById('overlayPin').onkeyup = function(e) {
+    if (e.key === 'Enter') confirmName();
+  };
   sel.innerHTML = '<option value="">Select your name</option>' +
     staffList.map(function(s) {
       return '<option value="' + s.id + '">' + s.name + '</option>';
@@ -1540,10 +1633,7 @@ function onOverlayNameChange() {
   document.getElementById('overlayMsg').style.display = 'none';
 }
 
-document.getElementById('overlayStaffSelect').addEventListener('change', onOverlayNameChange);
-document.getElementById('overlayPin').addEventListener('keyup', function(e) {
-  if (e.key === 'Enter') confirmName();
-});
+// These run after DOM is ready (called from showNameOverlay)
 
 async function confirmName() {
   var id = document.getElementById('overlayStaffSelect').value;
