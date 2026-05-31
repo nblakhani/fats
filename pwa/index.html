@@ -1409,7 +1409,7 @@ function showCalDay(ds) {
   var html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">';
   html += '<div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">';
   html += '<div style="font-weight:600;font-size:13px;">' + label + '</div>';
-  html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="showLogForm('' + ds + '')">+ Log visit</button>';
+  html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="showLogForm(\'' + ds + '\')">+ Log visit</button>';
   html += '</div>';
 
   if (!dayVisits.length && !dayFU.length) {
@@ -1430,7 +1430,7 @@ function showCalDay(ds) {
     html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:#fff5f5;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
     html += '<div style="font-weight:500;font-size:13px;color:var(--red);">↻ ' + (f.client_name||'') + '</div>';
-    html += '<button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="showLogForm('' + ds + '','' + (f.client_id||'') + '')">Log now</button>';
+    html += '<button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="showLogForm(\'' + ds + '\',\'' + (f.client_id||'') + '\')">Log now</button>';
     html += '</div>';
     if (f.notes) html += '<div style="font-size:12px;color:var(--red);margin-top:2px;">' + f.notes + '</div>';
     html += '</div>';
@@ -1457,7 +1457,7 @@ function showLogForm(ds, preClientId) {
   var html = '<div id="calLogForm" style="background:var(--surface);border:2px solid #1a472a;border-radius:10px;margin-top:10px;">';
   html += '<div style="padding:10px 14px;background:#1a472a;display:flex;justify-content:space-between;align-items:center;">';
   html += '<div style="color:#fff;font-weight:600;font-size:13px;">Log visit — ' + ds + '</div>';
-  html += '<button onclick="document.getElementById('calLogForm').remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
+  html += '<button onclick="var el=document.getElementById(\'calLogForm\');if(el)el.remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
   html += '</div><div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
 
   var inp = function(id, type, ph) { return '<input type="' + type + '" id="' + id + '" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
@@ -1476,7 +1476,7 @@ function showLogForm(ds, preClientId) {
   html += row('Priority', sel('cal-priority', '<option>Medium</option><option>High</option><option>Low</option>'));
   html += row('Follow-up date', inp('cal-followup', 'date'));
   html += '</div><div style="padding:10px 14px;border-top:1px solid #eee;">';
-  html += '<button id="calSaveBtn" class="btn btn-primary" onclick="saveCalVisit('' + ds + '')" style="width:100%;padding:11px;">Save visit</button>';
+  html += '<button id="calSaveBtn" data-ds="' + ds + '" class="btn btn-primary" onclick="saveCalVisit(this.dataset.ds)" style="width:100%;padding:11px;">Save visit</button>';
   html += '</div></div>';
 
   panel.innerHTML = panel.innerHTML + html;
