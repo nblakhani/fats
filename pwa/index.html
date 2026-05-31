@@ -1400,42 +1400,45 @@ function renderCalGrid() {
 }
 
 function showCalDay(ds) {
-  const dayVisits = calVisits.filter(v => v.visit_date === ds);
-  const dayFU     = calFU.filter(f => f.due_date === ds);
-  const panel     = document.getElementById('calDayPanel');
+  var dayVisits = calVisits.filter(function(v){ return v.visit_date === ds; });
+  var dayFU     = calFU.filter(function(f){ return f.due_date === ds; });
+  var panel     = document.getElementById('calDayPanel');
+  var d = new Date(ds+'T00:00:00');
+  var label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
 
-  // always show panel even if empty
+  var html = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">';
+  html += '<div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">';
+  html += '<div style="font-weight:600;font-size:13px;">' + label + '</div>';
+  html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="showLogForm('' + ds + '')">+ Log visit</button>';
+  html += '</div>';
 
-  const d = new Date(ds+'T00:00:00');
-  const label = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  if (!dayVisits.length && !dayFU.length) {
+    html += '<div style="padding:12px 14px;font-size:13px;color:var(--text3);">No activity logged. Tap + Log visit to add one.</div>';
+  }
 
-  let html = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;">
-    <div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
-      <div style="font-weight:600;font-size:13px;">${label}</div>
-      <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;" onclick="showLogForm('${ds}')">+ Log visit</button>
-    </div>
-    <div style="padding:10px 14px;background:var(--bg);font-weight:600;font-size:13px;border-bottom:1px solid var(--border);">${label}</div>`;
-
-  dayVisits.forEach(v => {
-    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div style="font-weight:500;font-size:13px;">${v.client_name||'—'}</div>
-        <div style="font-size:11px;color:var(--text2);">${v.time_in||''}${v.time_in&&v.time_out?' – ':''}${v.time_out||''}</div>
-      </div>
-      <div style="font-size:12px;color:var(--text2);">${v.visit_type} ${v.rep_met?'· '+v.rep_met:''}</div>
-      ${v.purpose?`<div style="font-size:12px;color:var(--text2);margin-top:3px;">${v.purpose.slice(0,100)}</div>`:''}
-    </div>`;
+  dayVisits.forEach(function(v) {
+    html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">';
+    html += '<div style="font-weight:500;font-size:13px;">' + (v.client_name||'—') + '</div>';
+    html += '<div style="font-size:11px;color:var(--text2);">' + (v.time_in||'') + (v.time_out?' – '+v.time_out:'') + '</div></div>';
+    html += '<div style="font-size:12px;color:var(--text2);">' + (v.visit_type||'') + (v.rep_met?' · '+v.rep_met:'') + '</div>';
+    if (v.purpose) html += '<div style="font-size:12px;color:var(--text2);margin-top:2px;">' + v.purpose.slice(0,80) + '</div>';
+    html += '</div>';
   });
 
-  dayFU.forEach(f => {
-    html += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--red-lt);">
-      <div style="font-weight:500;font-size:13px;color:var(--red);">↻ Follow-up: ${f.client_name}</div>
-      ${f.notes?`<div style="font-size:12px;color:var(--red);margin-top:3px;opacity:0.8;">${f.notes}</div>`:''}
-    </div>`;
+  dayFU.forEach(function(f) {
+    html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);background:#fff5f5;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+    html += '<div style="font-weight:500;font-size:13px;color:var(--red);">↻ ' + (f.client_name||'') + '</div>';
+    html += '<button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="showLogForm('' + ds + '','' + (f.client_id||'') + '')">Log now</button>';
+    html += '</div>';
+    if (f.notes) html += '<div style="font-size:12px;color:var(--red);margin-top:2px;">' + f.notes + '</div>';
+    html += '</div>';
   });
 
   html += '</div>';
   panel.innerHTML = html;
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function showLogForm(ds, preClientId) {
