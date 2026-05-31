@@ -1344,8 +1344,20 @@ function calChangeMonth(d) {
 }
 
 async function loadCal() {
-  const staffId = selectedStaffId || (staffList[0]?.id);
-  if (!staffId) return;
+  if (!selectedStaffId) {
+    // Show name prompt on calendar
+    document.getElementById('calGrid').innerHTML = '';
+    document.getElementById('calMonthLabel').textContent = 'Select your name first';
+    document.getElementById('calDayPanel').innerHTML =
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;">' +
+      '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Who are you?</div>' +
+      '<select onchange="setStaffFromCal(this.value)" style="width:100%;font-size:14px;padding:10px;border:1px solid var(--border);border-radius:8px;">' +
+      '<option value="">Select your name</option>' +
+      staffList.map(function(s){ return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('') +
+      '</select></div>';
+    return;
+  }
+  const staffId = selectedStaffId;
 
   const months = ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
