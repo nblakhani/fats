@@ -958,7 +958,7 @@ async function parseVoice() {
     const raw = d.content?.[0]?.text || '{}';
     const parsed = JSON.parse(raw.split('```json').join('').split('```').join('').trim());
     buildParsedForm(parsed);
-    document.getElementById('micStatus').textContent = 'Fields parsed — review below';
+    document.getElementById('micStatus').textContent = '✓ Parsed! Scroll down to review fields';
   } catch(e) {
     buildParsedForm({});
     document.getElementById('micStatus').textContent = 'Parse error — fill manually';
@@ -1016,7 +1016,10 @@ function buildParsedForm(data) {
   });
 
   document.getElementById('parsedFormBody').innerHTML = html;
-  document.getElementById('parsedSection').style.display = 'block';
+  const ps = document.getElementById('parsedSection');
+  ps.style.display = 'block';
+  // Scroll to the parsed form
+  setTimeout(() => ps.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
 function replayTranscript() {
