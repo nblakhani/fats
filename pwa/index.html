@@ -447,7 +447,7 @@ textarea { min-height: 72px; resize: vertical; }
     </div>
 
     <div id="parsedSection" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:16px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <button class="btn" onclick="document.getElementById('parsedSection').style.display='none'" style="padding:6px 10px;">← Back</button>
         <div style="font-weight:600;font-size:14px;">Log visit</div>
       </div>
@@ -605,11 +605,11 @@ textarea { min-height: 72px; resize: vertical; }
 
   <!-- CALENDAR -->
   <div id="tab-cal" class="section active">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
       <div class="section-title" style="margin-bottom:0;">My Calendar</div>
       <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="calToday()">Today</button>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
       <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(-1)">&#8592;</button>
       <div style="flex:1;text-align:center;font-weight:600;font-size:15px;" id="calMonthLabel"></div>
       <button class="btn" style="padding:6px 12px;" onclick="calChangeMonth(1)">&#8594;</button>
@@ -636,7 +636,7 @@ textarea { min-height: 72px; resize: vertical; }
 
   <!-- FEEDBACK INBOX -->
   <div id="tab-fb" class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
       <div class="section-title" style="margin-bottom:0;">Feedback from Manager</div>
       <button class="btn" style="font-size:11px;padding:5px 10px;" onclick="markAllRead()">Mark all read</button>
     </div>
@@ -718,9 +718,14 @@ window.addEventListener('load', async () => {
   window.addEventListener('online',  () => { checkOnline(); syncOfflineQueue(); });
   window.addEventListener('offline', () => checkOnline());
   captureGPS();
-  await loadStaff();
+  await loadStaff();   // staff list + restore saved name
   await loadClients();
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  // Set today's date in text form
+  const fd = document.getElementById('f-date');
+  if (fd) fd.value = new Date().toISOString().slice(0,10);
+  // Now load calendar (staff list ready, name restored)
+  await loadCal();
+  // Load other tabs in background
   loadMyVisits();
   loadMyFU();
 });
@@ -844,9 +849,11 @@ function selectStaff(id) {
   if (vsel) vsel.value = id;
   const fsel = document.getElementById('f-staff');
   if (fsel) fsel.value = id;
-  showToast(`Logged in as ${staffList.find(s=>s.id===id)?.name||'staff'}`);
+  showToast('Logged in as ' + ((staffList.find(function(s){return s.id===id;})||{name:'staff'}).name));
   loadFeedbackBadge();
   loadMyFU();
+  // Reload calendar with new staff
+  if (currentTab === 'cal') loadCal();
 }
 
 async function loadClients() {
@@ -1345,13 +1352,19 @@ function calChangeMonth(d) {
 
 async function loadCal() {
   if (!selectedStaffId) {
-    // Show name prompt on calendar
     document.getElementById('calGrid').innerHTML = '';
-    document.getElementById('calMonthLabel').textContent = 'Select your name first';
+    document.getElementById('calMonthLabel').textContent = '';
+    // If staff not loaded yet, wait and retry
+    if (!staffList.length) {
+      document.getElementById('calDayPanel').innerHTML =
+        '<div style="padding:16px;text-align:center;color:var(--text3);">Loading staff list…</div>';
+      setTimeout(loadCal, 1000);
+      return;
+    }
     document.getElementById('calDayPanel').innerHTML =
-      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;">' +
-      '<div style="font-size:14px;font-weight:600;margin-bottom:12px;">Who are you?</div>' +
-      '<select onchange="setStaffFromCal(this.value)" style="width:100%;font-size:14px;padding:10px;border:1px solid var(--border);border-radius:8px;">' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;">' +
+      '<div style="font-size:14px;font-weight:600;margin-bottom:12px;text-align:center;">Who are you?</div>' +
+      '<select onchange="setStaffFromCal(this.value)" style="width:100%;font-size:15px;padding:10px;border:1px solid var(--border);border-radius:8px;">' +
       '<option value="">Select your name</option>' +
       staffList.map(function(s){ return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('') +
       '</select></div>';
