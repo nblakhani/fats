@@ -1822,21 +1822,55 @@ async function closeFU(btn) {
 
 async function confirmCloseFU(id) {
   var reason = document.getElementById('close-reason-' + id).value;
-  var note = document.getElementById('close-note-' + id).value.trim();
+  var note   = document.getElementById('close-note-' + id).value.trim();
   if (!reason) { showToast('Please select a reason', 'error'); return; }
 
-  var r = await fetch(API + '/follow-ups/' + id + '/', {
+  var fullNote = reason + (note ? ': ' + note : '');
+
+  // 1. Mark follow-up as cancelled
+  var r1 = await fetch(API + '/follow-ups/' + id + '/', {
     method: 'PATCH',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({status: 'cancelled', notes: reason + (note ? ': ' + note : '')})
+    body: JSON.stringify({status: 'cancelled', notes: fullNote})
   });
-  if (r.ok) {
-    showToast('Follow-up closed');
-    loadMyFU();
-    loadCal();
-  } else {
-    showToast('Failed to close', 'error');
+  if (!r1.ok) { showToast('Failed to close follow-up', 'error'); return; }
+
+  // 2. Get follow-up details to create a visit
+  var fuData = await r1.json().catch(function(){ return null; });
+
+  // 3. Auto-log a visit for audit trail
+  var today = new Date().toISOString().slice(0,10);
+  var now   = new Date().toTimeString().slice(0,5);
+  var visitPayload = {
+    staff_id:           selectedStaffId,
+    client_id:          fuData && fuData.client_id ? fuData.client_id : null,
+    visit_date:         today,
+    visit_type:         'Follow-up',
+    lob:                null,
+    time_in:            now,
+    time_out:           now,
+    rep_met:            'N/A — Follow-up closed',
+    purpose:            'Follow-up closure: ' + reason,
+    notes:              fullNote,
+    priority:           'Low',
+    source:             'text',
+    action_items:       [],
+    follow_up_date:     null,
+    prev_visit_summary: '',
+    help_needed:        '',
+  };
+
+  if (visitPayload.client_id) {
+    await fetch(API + '/visits/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(visitPayload)
+    }).catch(function(){});
   }
+
+  showToast('Follow-up closed and logged');
+  loadMyFU();
+  loadCal();
 }
 
 
