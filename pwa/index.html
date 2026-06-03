@@ -379,9 +379,14 @@ textarea { min-height: 72px; resize: vertical; }
     <div class="header-title">Field Logger</div>
     <div class="header-sub">Apex Corporation</div>
   </div>
-  <div class="sync-badge" id="syncBadge">
-    <div class="sync-dot" id="syncDot"></div>
-    <span id="syncText">Online</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button onclick="logoutPWA()" id="loggedInAs" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;display:none;">
+      <span id="loggedInName">—</span> · Exit
+    </button>
+    <div class="sync-badge" id="syncBadge">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncText">Online</span>
+    </div>
   </div>
 </div>
 
@@ -1708,6 +1713,11 @@ async function confirmName() {
   });
 
   document.getElementById('nameOverlay').style.display = 'none';
+  // Show logged-in pill in header
+  var nameEl = document.getElementById('loggedInName');
+  if (nameEl) nameEl.textContent = (staffMember||{name:'?'}).name.split(' ')[0];
+  var btnEl = document.getElementById('loggedInAs');
+  if (btnEl) btnEl.style.display = 'block';
   btn.disabled = false;
   btn.textContent = 'Continue →';
 
@@ -1718,6 +1728,21 @@ async function confirmName() {
 
   var name = (s||{name:'staff'}).name;
   showToast('Welcome, ' + name.split(' ')[0] + '!');
+}
+
+
+function logoutPWA() {
+  try { localStorage.removeItem('lastStaffId'); } catch(e) {}
+  selectedStaffId = null;
+  document.getElementById('loggedInAs').style.display = 'none';
+  document.getElementById('loggedInName').textContent = '—';
+  // Reset dropdowns
+  ['voiceStaffSelect','f-staff','overlayStaffSelect'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Show overlay again
+  showNameOverlay();
 }
 
 </script>
