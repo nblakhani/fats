@@ -28,7 +28,7 @@ def send_feedback():
     fb = Feedback(
         visit_id = visit_id,
         staff_id = data["staff_id"],
-        from_id  = data["from_id"],
+        from_id  = data.get("from_id") or None,
         ftype    = data["ftype"],
         message  = data.get("message") or None,
         is_read  = False,
