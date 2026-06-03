@@ -1920,7 +1920,10 @@ async function saveFUVisit(btn) {
       loadMyFU();
       loadCal();
     } else {
-      showToast('Save failed', 'error');
+      var errData = await r.json().catch(function(){ return {}; });
+      var errMsg = errData.error || errData.message || ('HTTP ' + r.status);
+      console.error('Save failed:', r.status, errData);
+      showToast('Save failed: ' + errMsg, 'error');
       btn.disabled = false; btn.textContent = 'Save visit';
     }
   } catch(e) {
