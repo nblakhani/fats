@@ -1099,11 +1099,10 @@ function visitCard(v) {
         <button class="btn btn-sm" onclick="openFeedback('${v.id}','${v.staff_id}','${v.staff_name||''}','${v.client_name||''}')" style="font-size:11px;">
           💬 Send feedback
         </button>
-        <button class="ai-score-btn" id="score-btn-${v.id}" onclick="scoreVisit('${v.id}',this)">
+        <button class="btn" style="font-size:11px;" onclick="scoreVisit('${v.id}',this)">
           ✦ AI Score
         </button>
       </div>
-      <div id="score-panel-${v.id}" style="display:none;" class="ai-score-panel"></div>
     </div>
   </div>`;
 }
@@ -1749,73 +1748,7 @@ Respond ONLY in this JSON format, no markdown:
   "missing": ["<field or info missing>"]
 }`;
 
-async function scoreVisit(visitId, btn) {
-  // Fetch full visit details
-  const panel = document.getElementById('score-panel-' + visitId);
-  btn.disabled = true;
-  btn.textContent = '⟳ Scoring…';
-  panel.style.display = 'block';
-  panel.innerHTML = '<span class="spinner"></span> AI is reviewing this visit…';
 
-  try {
-    const vResp = await fetch(API + '/visits/' + visitId + '/');
-    const v = await vResp.json();
-
-    const visitText = `
-Visit details:
-- Client: ${v.client_name || 'Not specified'}
-- Staff: ${v.staff_name || 'Not specified'}
-- Visit type: ${v.visit_type || 'Not specified'}
-- LOB: ${v.lob || 'Not specified'}
-- Rep met: ${v.rep_met || 'Not recorded'}
-- Time in: ${v.time_in || 'Not recorded'}
-- Time out: ${v.time_out || 'Not recorded'}
-- Purpose: ${v.purpose || 'Not recorded'}
-- Previous visit summary: ${v.prev_visit_summary || 'Not recorded'}
-- Action items: ${(v.action_items||[]).map(a=>a.description).join('; ') || 'None recorded'}
-- Help needed: ${v.action_items?.find(a=>a.help_needed)?.help_needed || 'None'}
-- Notes: ${v.notes || 'Not recorded'}
-- Follow-up date: ${v.follow_ups?.length ? v.follow_ups[0].due_date : 'Not set'}
-`;
-
-    const raw = await callClaude(SCORE_SYSTEM, visitText);
-    const result = JSON.parse(raw.split('```json').join('').split('```').join('').trim());
-    const score = result.score || 0;
-    const scoreClass = score >= 8 ? 'score-high' : score >= 5 ? 'score-mid' : 'score-low';
-
-    panel.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-        <div class="ai-score-num ${scoreClass}">${score}<span style="font-size:13px;font-weight:400;color:var(--text3)">/10</span></div>
-        <div>
-          <div style="font-weight:600;font-size:12px;">${result.verdict}</div>
-          <div style="font-size:11px;color:var(--text3);">AI visit quality score</div>
-        </div>
-      </div>
-      ${result.strengths?.length ? `
-        <div style="margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:#3b6d11;margin-bottom:3px;">✓ Strengths</div>
-          ${result.strengths.map(s=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${s}</div>`).join('')}
-        </div>` : ''}
-      ${result.improvements?.length ? `
-        <div style="margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:#854f0b;margin-bottom:3px;">↑ Improvements</div>
-          ${result.improvements.map(i=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${i}</div>`).join('')}
-        </div>` : ''}
-      ${result.missing?.length ? `
-        <div>
-          <div style="font-size:11px;font-weight:600;color:#a32d2d;margin-bottom:3px;">✗ Missing</div>
-          ${result.missing.map(m=>`<div style="font-size:11px;color:var(--text2);padding-left:10px;">• ${m}</div>`).join('')}
-        </div>` : ''}
-    `;
-    btn.textContent = '✦ Re-score';
-    btn.disabled = false;
-
-  } catch(e) {
-    panel.innerHTML = '<span style="color:var(--red);font-size:12px;">Scoring failed — ' + e.message + '</span>';
-    btn.textContent = '✦ AI Score';
-    btn.disabled = false;
-  }
-}
 
 // ── CLIENT INTELLIGENCE SUMMARY ───────────────
 const INTEL_SYSTEM = `You are a senior sales manager at Apex Corporation India, reviewing a client's complete visit history.
@@ -1828,57 +1761,7 @@ Write a concise 4-sentence client intelligence summary covering:
 Be specific — use actual product names, amounts, and dates from the data.
 Write in professional but direct language. No bullet points — flowing sentences only.`;
 
-async function clientIntel(clientId, clientName, btn) {
-  const panel = document.getElementById('clientIntelPanel');
-  btn.disabled = true;
-  btn.textContent = '⟳ Analysing…';
-  panel.style.display = 'block';
-  panel.innerHTML = '<span class="spinner"></span> AI is analysing visit history for ' + clientName + '…';
 
-  try {
-    const vResp = await fetch(API + '/clients/' + clientId + '/visits/');
-    const visits = await vResp.json();
-
-    if (!visits || visits.length === 0) {
-      panel.innerHTML = '<span style="color:var(--text3);font-size:13px;">No visit history found for this client.</span>';
-      btn.disabled = false;
-      btn.textContent = '✦ AI Intel';
-      return;
-    }
-
-    const historyText = `Client: ${clientName}
-Total visits: ${visits.length}
-
-Visit history (most recent first):
-${visits.slice(0,10).map((v,i) => `
-Visit ${i+1} — ${v.visit_date} (${v.visit_type}) by ${v.staff_name}
-  Rep met: ${v.rep_met || 'Not recorded'}
-  LOB: ${v.lob || 'Not specified'}
-  Purpose: ${v.purpose || 'Not recorded'}
-  Previous summary: ${v.prev_visit_summary || 'None'}
-  Actions: ${(v.action_items||[]).map(a=>a.description).join('; ') || 'None'}
-  Notes: ${v.notes || 'None'}
-  Follow-up: ${(v.follow_ups||[]).map(f=>f.due_date).join(', ') || 'None set'}
-`).join('')}`;
-
-    const summary = await callClaude(INTEL_SYSTEM, historyText);
-
-    panel.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:700;color:var(--blue);">✦ AI Client Intelligence — ${clientName}</div>
-        <div style="font-size:10px;color:var(--text3);">Based on ${visits.length} visit${visits.length!==1?'s':''}</div>
-      </div>
-      <div style="font-size:13px;line-height:1.7;color:var(--text);">${summary.split(String.fromCharCode(10)).join('<br>')}</div>
-    `;
-    btn.textContent = '✦ Refresh Intel';
-    btn.disabled = false;
-
-  } catch(e) {
-    panel.innerHTML = '<span style="color:var(--red);font-size:12px;">Analysis failed — ' + e.message + '</span>';
-    btn.textContent = '✦ AI Intel';
-    btn.disabled = false;
-  }
-}
 
 
 // ── METRIC DRILL-DOWN ─────────────────────────
@@ -2104,6 +1987,12 @@ async function drillDown(type) {
     });
     content.innerHTML = html;
   }
+}
+
+
+// ── AI SCORE (stub) ───────────────────────────
+function scoreVisit(visitId, btn) {
+  showToast('AI Score — feature not yet implemented', 'info');
 }
 
 </script>
