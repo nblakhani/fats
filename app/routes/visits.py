@@ -140,6 +140,23 @@ def create_visit():
         db.session.add(fu)
 
     db.session.commit()
+
+    # Auto-complete any open follow-ups for this client+staff on or before visit date
+    try:
+        from app.models.follow_up import FollowUp
+        open_fus = FollowUp.query.filter(
+            FollowUp.client_id      == client_id,
+            FollowUp.assigned_to_id == staff_id,
+            FollowUp.status         == 'scheduled',
+            FollowUp.due_date       <= visit_date
+        ).all()
+        for fu in open_fus:
+            fu.status = 'completed'
+        if open_fus:
+            db.session.commit()
+    except Exception:
+        pass  # non-critical
+
     return jsonify(visit.to_dict(include_related=True)), 201
 
 @bp.route("/<visit_id>", methods=["PATCH"])
