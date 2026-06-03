@@ -24,13 +24,14 @@ FEEDBACK_LABELS = {
     "pricing_support":  "💰 Will arrange pricing support",
     "escalating":       "⚡ Escalating to management",
     "custom":           "✍️ Custom message",
+    "resolved":         "✅ Help request resolved",
 }
 
 class Feedback(db.Model):
     __tablename__ = "feedback"
 
     id          = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    visit_id    = db.Column(db.String(36), db.ForeignKey("visits.id"), nullable=False)
+    visit_id    = db.Column(db.String(36), db.ForeignKey("visits.id"), nullable=True)
     staff_id    = db.Column(db.String(36), db.ForeignKey("staff.id"),  nullable=False)
     from_id     = db.Column(db.String(36), db.ForeignKey("staff.id"),  nullable=True)
     ftype       = db.Column(db.String(50), nullable=False)
