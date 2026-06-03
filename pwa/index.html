@@ -554,8 +554,8 @@ textarea { min-height: 72px; resize: vertical; }
           </select>
         </div>
         <div class="row2">
-          <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="time" id="f-tin" onchange="clearFieldError('f-tin')"></div>
-          <div class="field"><div class="field-label">Time out <span class="required-star">*</span></div><input type="time" id="f-tout"></div>
+          <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="time" id="f-tin" step="60" onchange="clearFieldError('f-tin')"></div>
+          <div class="field"><div class="field-label">Time out <span class="required-star">*</span></div><input type="time" id="f-tout" step="60"></div>
         </div>
         <div class="field">
           <div class="field-label">Main purpose / issue <span class="required-star">*</span></div>
@@ -1519,7 +1519,7 @@ function showLogForm(ds, preClientId) {
   html += '<button onclick="var el=document.getElementById(\'calLogForm\');if(el)el.remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
   html += '</div><div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
 
-  var inp = function(id, type, ph) { return '<input type="' + type + '" id="' + id + '" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
+  var inp = function(id, type, ph, val) { return '<input type="' + type + '" id="' + id + '" ' + (val?'value="'+val+'"':'') + ' placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
   var sel = function(id, opts) { return '<select id="' + id + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">' + opts + '</select>'; };
   var ta  = function(id, ph) { return '<textarea id="' + id + '" rows="2" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;resize:none;"></textarea>'; };
   var row = function(label, input, full) { return '<div' + (full?' style="grid-column:1/-1;"':'') + '><div style="font-size:11px;color:#666;margin-bottom:3px;">' + label + '</div>' + input + '</div>'; };
@@ -1875,7 +1875,8 @@ function showFULogForm(btn) {
   html += row('Rep met *', inp('ful-rep', 'text', 'Name, Designation'), true);
   html += row('Purpose *', ta('ful-purpose', 'Reason for visit'), true);
   html += row('Notes *', ta('ful-notes', 'Outcome / observations'), true);
-  html += row('Next follow-up', inp('ful-followup', 'date', ''), true);
+  var nofuLabel = '<div style="margin-top:3px;"><label style="font-size:11px;color:#888;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ful-nofu" onchange="toggleNoFU(this,\'ful-followup\')"> No follow-up needed</label></div>';
+  html += row('Next follow-up', inp('ful-followup', 'date', '') + nofuLabel, true);
   html += '</div><div style="padding:10px 14px;border-top:1px solid #eee;">';
   html += '<button id="ful-save-btn" class="btn btn-primary" data-fuid="' + fuId + '" onclick="saveFUVisit(this)" style="width:100%;padding:11px;">Save visit</button>';
   html += '</div></div>';
@@ -1930,6 +1931,14 @@ async function saveFUVisit(btn) {
     showToast('Network error', 'error');
     btn.disabled = false; btn.textContent = 'Save visit';
   }
+}
+
+
+function toggleNoFU(cb, fieldId) {
+  var field = document.getElementById(fieldId);
+  if (!field) return;
+  field.disabled = cb.checked;
+  if (cb.checked) field.value = '';
 }
 
 </script>

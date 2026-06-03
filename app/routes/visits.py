@@ -143,7 +143,6 @@ def create_visit():
 
     # Auto-complete any open follow-ups for this client+staff on or before visit date
     try:
-        from app.models.follow_up import FollowUp
         open_fus = FollowUp.query.filter(
             FollowUp.client_id      == client_id,
             FollowUp.assigned_to_id == staff_id,
