@@ -1143,7 +1143,11 @@ async function loadVisits() {
       <td>${v.time_in||'—'}</td>
       <td>${v.time_out||'—'}</td>
       <td>${badge(v.priority, priClass(v.priority))}</td>
-      <td style="max-width:220px;color:var(--text2)">${(v.purpose||'').slice(0,80)}</td>
+      <td style="color:var(--text2);font-size:12px;">${v.rep_met||'—'}</td>
+      <td style="max-width:240px;">
+        ${v.purpose?`<div style="color:var(--text);font-size:12px;">${v.purpose.slice(0,80)}</div>`:''}
+        ${v.notes?`<div style="color:var(--text2);font-size:11px;margin-top:2px;">${v.notes.slice(0,80)}</div>`:''}
+      </td>
     </tr>`;
   });
   html += '</tbody></table></div></div>';
