@@ -1239,19 +1239,24 @@ async function confirmActionDone(id) {
 
   // 2. Send feedback to staff member notifying resolution
   if (item.staff_id) {
-    await fetch(API + '/feedback/', {
+    const fbRes = await fetch(API + '/feedback/', {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        visit_id:    item.visit_id,
         staff_id:    item.staff_id,
-        from_id:     null,
         ftype:       'resolved',
-        message:     'Your help request has been resolved. Action: ' + (item.description||'') + '. Resolution: ' + note
+        message:     'Help request resolved. Action: ' + (item.description||'') + '. Resolution: ' + note
       })
     });
+    if (!fbRes.ok) {
+      const fbErr = await fbRes.json().catch(function(){return {};});
+      console.error('Feedback failed:', fbRes.status, fbErr);
+      showFbToast('Done but notification failed: ' + (fbErr.error||fbRes.status));
+    } else {
+      showFbToast('Marked done — staff notified');
+    }
+  } else {
+    showFbToast('Marked done');
   }
-
-  showFbToast('Marked done — staff notified');
   loadActions();
 }
 

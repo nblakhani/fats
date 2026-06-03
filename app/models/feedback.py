@@ -32,7 +32,7 @@ class Feedback(db.Model):
     id          = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     visit_id    = db.Column(db.String(36), db.ForeignKey("visits.id"), nullable=False)
     staff_id    = db.Column(db.String(36), db.ForeignKey("staff.id"),  nullable=False)
-    from_id     = db.Column(db.String(36), db.ForeignKey("staff.id"),  nullable=False)
+    from_id     = db.Column(db.String(36), db.ForeignKey("staff.id"),  nullable=True)
     ftype       = db.Column(db.String(50), nullable=False)
     message     = db.Column(db.Text,       nullable=True)
     is_read     = db.Column(db.Boolean,    default=False)
