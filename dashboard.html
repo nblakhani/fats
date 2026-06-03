@@ -1195,9 +1195,9 @@ async function loadActions() {
       <td>${a.description}</td>
       <td style="color:var(--red)">${a.help_needed||'—'}</td>
       <td style="white-space:nowrap">${fmtDate(a.due_date)}</td>
-      <td>${badge(a.status, a.status==='done'?'badge-green':a.status==='open'?'badge-amber':'badge-gray')}</td>
+      <td>${badge(a.status==='done'?'Closed':'Open', a.status==='done'?'badge-green':'badge-red')}</td>
       <td>
-        ${a.status !== 'done' ? `<button class="btn" style="font-size:11px;padding:3px 8px;" onclick="markActionDone('${a.id}')">✓ Done</button>` : ''}
+        ${a.status !== 'done' ? `<button class="btn btn-primary" style="font-size:11px;padding:3px 8px;background:var(--green);border-color:var(--green);" onclick="markActionDone('${a.id}')">Mark Closed</button>` : ''}
         ${a.status === 'done' ? `<button class="btn" style="font-size:11px;padding:3px 8px;color:var(--text3);" onclick="markActionOpen('${a.id}')">Reopen</button>` : ''}
       </td>
     </tr>`;
