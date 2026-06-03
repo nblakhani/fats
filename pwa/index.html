@@ -1278,25 +1278,59 @@ async function loadMyVisits() {
 
 // ── MY FOLLOW-UPS ─────────────────────────────
 async function loadMyFU() {
-  const el = document.getElementById('myFU');
-  const staffId = selectedStaffId || (staffList[0]?.id);
+  var el = document.getElementById('myFU');
+  var staffId = selectedStaffId;
   if (!staffId) { el.innerHTML='<div class="empty">Select your name first</div>'; return; }
-  const data = await api('/follow-ups?staff_id='+staffId+'&status=scheduled');
-  if (!data || !data.length) { el.innerHTML='<div class="empty">No follow-ups scheduled</div>'; return; }
-  const today = new Date().toISOString().slice(0,10);
-  const overdue = data.filter(f=>f.due_date<today).length;
-  if (overdue) {
-    document.getElementById('fuOverdueCount').textContent = overdue+' overdue';
-    document.getElementById('fuNavBadge').innerHTML = `<span class="nav-badge">${overdue}</span>`;
+  var data = await api('/follow-ups/?staff_id='+staffId+'&status=scheduled');
+  if (!data || !data.length) {
+    el.innerHTML='<div class="empty" style="color:var(--green);">No open follow-ups!</div>';
+    document.getElementById('fuNavBadge').innerHTML = '';
+    return;
   }
-  el.innerHTML = data.map(f=>`
-    <div class="fu-item">
-      <div>
-        <div class="fu-client">${f.client_name}</div>
-        <div class="fu-detail">${f.notes||''}</div>
-      </div>
-      <div class="fu-date ${f.due_date<today?'overdue':''}">${fmtDate(f.due_date)}</div>
-    </div>`).join('');
+  var today = new Date().toISOString().slice(0,10);
+  var overdue = data.filter(function(f){ return f.due_date < today; }).length;
+  if (overdue) {
+    document.getElementById('fuOverdueCount').textContent = overdue + ' overdue';
+    document.getElementById('fuNavBadge').innerHTML = '<span class="nav-badge">' + overdue + '</span>';
+  } else {
+    document.getElementById('fuOverdueCount').textContent = '';
+    document.getElementById('fuNavBadge').innerHTML = '';
+  }
+  var html = '';
+  data.forEach(function(f) {
+    var isOverdue = f.due_date < today;
+    html += '<div class="fu-item" style="' + (isOverdue ? 'background:#fff5f5;' : '') + '">';
+    html += '<div style="flex:1;">';
+    html += '<div class="fu-client">' + (f.client_name||'—') + '</div>';
+    if (f.notes) html += '<div class="fu-detail">' + f.notes + '</div>';
+    html += '<div class="fu-date ' + (isOverdue ? 'overdue' : '') + '">' + fmtDate(f.due_date) + (isOverdue ? ' — OVERDUE' : '') + '</div>';
+    html += '</div>';
+    html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 10px;white-space:nowrap;" data-id="' + f.id + '" onclick="markFUDone(this)">✓ Done</button>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+async function markFUDone(btn) {
+  var id = btn.dataset.id;
+  btn.disabled = true;
+  btn.textContent = '…';
+  var r = await fetch(API + '/follow-ups/' + id + '/', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({status: 'completed'})
+  });
+  if (r.ok) {
+    var row = btn.parentElement;
+    row.style.opacity = '0.4';
+    row.style.transition = 'opacity 0.3s';
+    setTimeout(function(){ loadMyFU(); loadCal(); }, 400);
+    showToast('Follow-up marked done!');
+  } else {
+    btn.disabled = false;
+    btn.textContent = '✓ Done';
+    showToast('Failed to update', 'error');
+  }
 }
 
 // ── HELPERS ───────────────────────────────────
