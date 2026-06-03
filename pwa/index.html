@@ -1307,7 +1307,7 @@ async function loadMyFU() {
     html += '<div class="fu-date ' + (isOverdue ? 'overdue' : '') + '">' + fmtDate(f.due_date) + (isOverdue ? ' · OVERDUE' : '') + '</div>';
     html += '</div>';
     html += '<div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;">';
-    html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 8px;white-space:nowrap;" onclick="switchTab(&quot;cal&quot;)" title="Log a visit to complete">Log visit</button>';
+    html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 8px;white-space:nowrap;" data-fuid="' + f.id + '" data-client="' + (f.client_id||'') + '" data-ds="' + f.due_date + '" onclick="showFULogForm(this)">Log visit</button>';
     html += '<button class="btn" style="font-size:11px;padding:5px 8px;white-space:nowrap;color:var(--red);border-color:var(--red);" data-fuid="' + f.id + '" data-client="' + (f.client_name||'') + '" onclick="closeFU(this)">Close</button>';
     html += '</div>';
     html += '</div>';
@@ -1835,6 +1835,97 @@ async function confirmCloseFU(id) {
     loadCal();
   } else {
     showToast('Failed to close', 'error');
+  }
+}
+
+
+function showFULogForm(btn) {
+  var clientId = btn.dataset.client;
+  var ds       = btn.dataset.ds || new Date().toISOString().slice(0,10);
+  var fuId     = btn.dataset.fuid;
+
+  // Remove any existing form
+  var existing = document.getElementById('fu-log-form');
+  if (existing) existing.remove();
+
+  var clientOpts = clientList.map(function(c) {
+    return '<option value="' + c.id + '"' + (c.id===clientId?' selected':'') + '>' + c.company_name + '</option>';
+  }).join('');
+  var lobOpts = ['Compressed Air','Power Technique','Mining Equipment','Industrial Bearings',
+    'Office Automation','Motors & Fans','Material Handling','Printing','Computers & IT']
+    .map(function(l){ return '<option>' + l + '</option>'; }).join('');
+
+  var html = '<div id="fu-log-form" style="background:var(--surface);border:2px solid #1a472a;border-radius:10px;margin-top:10px;">';
+  html += '<div style="padding:10px 14px;background:#1a472a;display:flex;justify-content:space-between;align-items:center;">';
+  html += '<div style="color:#fff;font-weight:600;font-size:13px;">Log visit</div>';
+  html += '<button onclick="document.getElementById(\'fu-log-form\').remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
+  html += '</div><div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+
+  var inp = function(id, type, ph, val) { return '<input type="' + type + '" id="' + id + '" value="' + (val||'') + '" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
+  var sel = function(id, opts) { return '<select id="' + id + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">' + opts + '</select>'; };
+  var ta  = function(id, ph) { return '<textarea id="' + id + '" rows="2" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;resize:none;"></textarea>'; };
+  var row = function(label, input, full) { return '<div' + (full?' style="grid-column:1/-1;"':'') + '><div style="font-size:11px;color:#666;margin-bottom:3px;">' + label + '</div>' + input + '</div>'; };
+
+  html += row('Client *', sel('ful-client', '<option value="">Select client</option>' + clientOpts), true);
+  html += row('Date *', inp('ful-date', 'date', '', ds));
+  html += row('Visit type', sel('ful-type', '<option>Follow-up</option><option>Sales call</option><option>Prospecting</option><option>Service visit</option><option>Demo</option><option>Collection</option>'));
+  html += row('LOB *', sel('ful-lob', '<option value="">LOB</option>' + lobOpts));
+  html += row('Time in *', inp('ful-tin', 'time', ''));
+  html += row('Time out *', inp('ful-tout', 'time', ''));
+  html += row('Rep met *', inp('ful-rep', 'text', 'Name, Designation'), true);
+  html += row('Purpose *', ta('ful-purpose', 'Reason for visit'), true);
+  html += row('Notes *', ta('ful-notes', 'Outcome / observations'), true);
+  html += row('Next follow-up', inp('ful-followup', 'date', ''), true);
+  html += '</div><div style="padding:10px 14px;border-top:1px solid #eee;">';
+  html += '<button id="ful-save-btn" class="btn btn-primary" data-fuid="' + fuId + '" onclick="saveFUVisit(this)" style="width:100%;padding:11px;">Save visit</button>';
+  html += '</div></div>';
+
+  var fuItem = btn.closest('.fu-item');
+  fuItem.after(document.createRange().createContextualFragment(html));
+  document.getElementById('fu-log-form').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function saveFUVisit(btn) {
+  var g = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var errors = [];
+  if (!g('ful-client'))  errors.push('Client');
+  if (!g('ful-lob'))     errors.push('LOB');
+  if (!g('ful-tin'))     errors.push('Time in');
+  if (!g('ful-tout'))    errors.push('Time out');
+  if (!g('ful-rep'))     errors.push('Rep met');
+  if (!g('ful-purpose')) errors.push('Purpose');
+  if (!g('ful-notes'))   errors.push('Notes');
+  if (errors.length) { showToast('Missing: ' + errors.slice(0,3).join(', '), 'error'); return; }
+
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  var payload = {
+    staff_id: selectedStaffId, client_id: g('ful-client'),
+    visit_date: g('ful-date'), visit_type: g('ful-type'), lob: g('ful-lob'),
+    time_in: g('ful-tin'), time_out: g('ful-tout'), rep_met: g('ful-rep'),
+    purpose: g('ful-purpose'), notes: g('ful-notes'), priority: 'Medium',
+    source: 'text', action_items: [],
+    follow_up_date: g('ful-followup') || null,
+    prev_visit_summary: '', help_needed: '',
+  };
+
+  try {
+    var r = await fetch(API + '/visits/', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      showToast('Visit saved — follow-up completed!');
+      document.getElementById('fu-log-form').remove();
+      loadMyFU();
+      loadCal();
+    } else {
+      showToast('Save failed', 'error');
+      btn.disabled = false; btn.textContent = 'Save visit';
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    btn.disabled = false; btn.textContent = 'Save visit';
   }
 }
 
