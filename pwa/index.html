@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a472a">
 <title>Field Logger — Apex Corporation</title>
@@ -554,8 +555,8 @@ textarea { min-height: 72px; resize: vertical; }
           </select>
         </div>
         <div class="row2">
-          <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="time" id="f-tin" step="60" onchange="clearFieldError('f-tin')"></div>
-          <div class="field"><div class="field-label">Time out <span class="required-star">*</span></div><input type="time" id="f-tout" step="60"></div>
+          <div class="field"><div class="field-label">Time in <span class="required-star">*</span></div><input type="text" id="f-tin" placeholder="HH:MM (e.g. 14:30)" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" maxlength="5" onchange="clearFieldError('f-tin')"></div>
+          <div class="field"><div class="field-label">Time out <span class="required-star">*</span></div><input type="text" id="f-tout" placeholder="HH:MM (e.g. 16:00)" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" maxlength="5"></div>
         </div>
         <div class="field">
           <div class="field-label">Main purpose / issue <span class="required-star">*</span></div>
@@ -1519,7 +1520,7 @@ function showLogForm(ds, preClientId) {
   html += '<button onclick="var el=document.getElementById(\'calLogForm\');if(el)el.remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>';
   html += '</div><div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
 
-  var inp = function(id, type, ph, val) { return '<input type="' + type + '" id="' + id + '" ' + (val?'value="'+val+'"':'') + ' placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
+  var inp = function(id, type, ph, val) { var t = type==='time'?'text':type; var pat = type==='time'?' pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" maxlength="5"':''; var pl = type==='time'?(ph||'HH:MM'):( ph||''); return '<input type="' + t + '" id="' + id + '" ' + (val?'value="'+val+'"':'') + ' placeholder="' + pl + '"' + pat + ' style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">'; };
   var sel = function(id, opts) { return '<select id="' + id + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;">' + opts + '</select>'; };
   var ta  = function(id, ph) { return '<textarea id="' + id + '" rows="2" placeholder="' + (ph||'') + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;resize:none;"></textarea>'; };
   var row = function(label, input, full) { return '<div' + (full?' style="grid-column:1/-1;"':'') + '><div style="font-size:11px;color:#666;margin-bottom:3px;">' + label + '</div>' + input + '</div>'; };
