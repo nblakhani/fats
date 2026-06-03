@@ -627,8 +627,9 @@ textarea { min-height: 72px; resize: vertical; }
       <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
     </div>
     <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--text3);flex-wrap:wrap;">
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:3px;vertical-align:middle;"></span>Visit</span>
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:3px;vertical-align:middle;"></span>Follow-up due</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#dbeafe;border:1px solid #1e40af;margin-right:3px;vertical-align:middle;"></span><span style="color:#1e40af;">● Visit</span></span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#fef3c7;border:1px solid #92400e;margin-right:3px;vertical-align:middle;"></span><span style="color:#92400e;">↻ Follow-up</span></span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#fee2e2;border:1px solid #991b1b;margin-right:3px;vertical-align:middle;"></span><span style="color:#991b1b;">↻ Overdue</span></span>
     </div>
     <div id="calDayPanel" style="margin-top:12px;"></div>
   </div>
@@ -1366,33 +1367,48 @@ async function loadCal() {
 }
 
 function renderCalGrid() {
-  const grid  = document.getElementById('calGrid');
-  const today = new Date();
-  const first = new Date(calYear, calMonth, 1).getDay();
-  const days  = new Date(calYear, calMonth+1, 0).getDate();
+  var grid  = document.getElementById('calGrid');
+  var today = new Date();
+  var first = new Date(calYear, calMonth, 1).getDay();
+  var days  = new Date(calYear, calMonth+1, 0).getDate();
 
-  let html = '';
+  var html = '';
 
-  // Empty cells
-  for (let i=0; i<first; i++) {
+  for (var i=0; i<first; i++) {
     html += '<div style="min-height:52px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg);opacity:0.4;"></div>';
   }
 
-  for (let d=1; d<=days; d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
-    const dayVisits = calVisits.filter(v => v.visit_date === ds);
-    const dayFU     = calFU.filter(f => f.due_date === ds);
-    const hasItems  = dayVisits.length || dayFU.length;
+  for (var d=1; d<=days; d++) {
+    var ds = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
+    var dayVisits = calVisits.filter(function(v){ return v.visit_date === ds; });
+    var dayFU     = calFU.filter(function(f){ return f.due_date === ds; });
 
-    html += `<div onclick="showCalDay('${ds}')" style="min-height:52px;padding:4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;background:${isToday?'var(--green-lt)':'var(--surface)'};${hasItems?'':''}">`;
-    html += `<div style="font-size:11px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--green)':'var(--text)'};margin-bottom:2px;">${d}</div>`;
-    dayVisits.slice(0,2).forEach(v => {
-      html += `<div style="font-size:9px;background:var(--blue-lt);color:var(--blue);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${(v.client_name||'').slice(0,10)}</div>`;
+    var bg = isToday ? 'background:#e8f0eb;' : 'background:var(--surface);';
+    html += '<div data-ds="' + ds + '" onclick="showCalDay(this.dataset.ds)" style="min-height:52px;padding:3px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;' + bg + '">';
+    html += '<div style="font-size:11px;font-weight:' + (isToday?'700':'500') + ';color:' + (isToday?'var(--green)':'var(--text)') + ';margin-bottom:2px;">' + d + '</div>';
+
+    // Visits — blue
+    dayVisits.slice(0,2).forEach(function(v) {
+      html += '<div style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:2px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="' + (v.visit_type||'Visit') + ': ' + (v.client_name||'') + '">';
+      html += '● ' + (v.client_name||'').slice(0,9) + '</div>';
     });
-    dayFU.slice(0,1).forEach(f => {
-      html += `<div style="font-size:9px;background:var(--red-lt);color:var(--red);border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">↻ ${(f.client_name||'').slice(0,8)}</div>`;
+    if (dayVisits.length > 2) {
+      html += '<div style="font-size:8px;color:#1e40af;">+' + (dayVisits.length-2) + ' more</div>';
+    }
+
+    // Follow-ups — amber/orange
+    dayFU.slice(0,2).forEach(function(f) {
+      var overdue = ds < today.toISOString().slice(0,10);
+      var bg2 = overdue ? '#fee2e2' : '#fef3c7';
+      var col = overdue ? '#991b1b' : '#92400e';
+      html += '<div style="font-size:9px;background:' + bg2 + ';color:' + col + ';border-radius:2px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="Follow-up: ' + (f.client_name||'') + '">';
+      html += '↻ ' + (f.client_name||'').slice(0,9) + '</div>';
     });
+    if (dayFU.length > 2) {
+      html += '<div style="font-size:8px;color:#92400e;">+' + (dayFU.length-2) + ' more</div>';
+    }
+
     html += '</div>';
   }
 
