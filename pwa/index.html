@@ -1714,8 +1714,9 @@ async function confirmName() {
 
   document.getElementById('nameOverlay').style.display = 'none';
   // Show logged-in pill in header
+  var loggedName = (staffList.find(function(x){ return x.id===id; })||{name:'?'}).name;
   var nameEl = document.getElementById('loggedInName');
-  if (nameEl) nameEl.textContent = (staffMember||{name:'?'}).name.split(' ')[0];
+  if (nameEl) nameEl.textContent = loggedName.split(' ')[0];
   var btnEl = document.getElementById('loggedInAs');
   if (btnEl) btnEl.style.display = 'block';
   btn.disabled = false;
