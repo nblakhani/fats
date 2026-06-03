@@ -1840,9 +1840,7 @@ Write in professional but direct language. No bullet points — flowing sentence
 function closeDrill() {
   document.getElementById('drillModal').style.display = 'none';
 }
-document.getElementById('drillModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('drillModal')) closeDrill();
-});
+
 
 async function drillDown(type) {
   const modal = document.getElementById('drillModal');
