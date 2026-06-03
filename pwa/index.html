@@ -1301,12 +1301,15 @@ async function loadMyFU() {
   data.forEach(function(f) {
     var isOverdue = f.due_date < today;
     html += '<div class="fu-item" style="' + (isOverdue ? 'background:#fff5f5;' : '') + '">';
-    html += '<div style="flex:1;">';
+    html += '<div style="flex:1;min-width:0;">';
     html += '<div class="fu-client">' + (f.client_name||'—') + '</div>';
     if (f.notes) html += '<div class="fu-detail">' + f.notes + '</div>';
-    html += '<div class="fu-date ' + (isOverdue ? 'overdue' : '') + '">' + fmtDate(f.due_date) + (isOverdue ? ' — OVERDUE' : '') + '</div>';
+    html += '<div class="fu-date ' + (isOverdue ? 'overdue' : '') + '">' + fmtDate(f.due_date) + (isOverdue ? ' · OVERDUE' : '') + '</div>';
     html += '</div>';
-    html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="switchTab(&quot;cal&quot;)" title="Log a visit to complete this follow-up">Log visit</button>';
+    html += '<div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;">';
+    html += '<button class="btn btn-primary" style="font-size:11px;padding:5px 8px;white-space:nowrap;" onclick="switchTab(&quot;cal&quot;)" title="Log a visit to complete">Log visit</button>';
+    html += '<button class="btn" style="font-size:11px;padding:5px 8px;white-space:nowrap;color:var(--red);border-color:var(--red);" data-fuid="' + f.id + '" data-client="' + (f.client_name||'') + '" onclick="closeFU(this)">Close</button>';
+    html += '</div>';
     html += '</div>';
   });
   el.innerHTML = html;
@@ -1779,6 +1782,60 @@ function logoutPWA() {
   });
   // Show overlay again
   showNameOverlay();
+}
+
+
+async function closeFU(btn) {
+  var id = btn.dataset.fuid;
+  var client = btn.dataset.client;
+  var reasons = [
+    'Prospect not converting',
+    'Client not interested',
+    'Duplicate follow-up',
+    'Issue resolved without visit',
+    'Client requested no contact',
+    'Other'
+  ];
+  var reasonHtml = reasons.map(function(r, i) {
+    return '<option value="' + r + '">' + r + '</option>';
+  }).join('');
+
+  // Show inline reason picker
+  var row = btn.closest('.fu-item');
+  var existing = document.getElementById('close-form-' + id);
+  if (existing) { existing.remove(); return; }
+
+  var form = document.createElement('div');
+  form.id = 'close-form-' + id;
+  form.style.cssText = 'background:#fff5f5;border:1px solid var(--red);border-radius:8px;padding:10px 12px;margin-top:8px;';
+  form.innerHTML = '<div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--red);">Close follow-up: ' + client + '</div>' +
+    '<select id="close-reason-' + id + '" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;margin-bottom:8px;">' +
+    '<option value="">Select reason</option>' + reasonHtml + '</select>' +
+    '<textarea id="close-note-' + id + '" rows="2" placeholder="Additional notes (optional)" style="width:100%;font-size:13px;padding:7px 8px;border:1px solid #ddd;border-radius:6px;resize:none;margin-bottom:8px;"></textarea>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<button class="btn btn-primary" style="flex:1;background:var(--red);border-color:var(--red);" data-fuid="' + id + '" onclick="confirmCloseFU(this.dataset.fuid)">Confirm close</button>' +
+    '<button class="btn" style="flex:1;" onclick="this.parentElement.parentElement.remove()">Cancel</button>' +
+    '</div>';
+  row.after(form);
+}
+
+async function confirmCloseFU(id) {
+  var reason = document.getElementById('close-reason-' + id).value;
+  var note = document.getElementById('close-note-' + id).value.trim();
+  if (!reason) { showToast('Please select a reason', 'error'); return; }
+
+  var r = await fetch(API + '/follow-ups/' + id + '/', {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({status: 'cancelled', notes: reason + (note ? ': ' + note : '')})
+  });
+  if (r.ok) {
+    showToast('Follow-up closed');
+    loadMyFU();
+    loadCal();
+  } else {
+    showToast('Failed to close', 'error');
+  }
 }
 
 </script>
