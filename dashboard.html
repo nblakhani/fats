@@ -1543,8 +1543,15 @@ function showFbToast(msg) {
 }
 
 // Close modal on backdrop click
-document.getElementById('feedbackModal').addEventListener('click', function(e) {
-  if (e.target === this) closeFeedback();
+document.addEventListener('DOMContentLoaded', function() {
+  var fm = document.getElementById('feedbackModal');
+  if (fm) fm.addEventListener('click', function(e) {
+    if (e.target === this) closeFeedback();
+  });
+  var dm = document.getElementById('drillModal');
+  if (dm) dm.addEventListener('click', function(e) {
+    if (e.target === this) closeDrill();
+  });
 });
 
 
@@ -1949,9 +1956,7 @@ function closeDrill() {
   document.getElementById('drillModal').style.display = 'none';
 }
 
-document.getElementById('drillModal').addEventListener('click', function(e) {
-  if (e.target === this) closeDrill();
-});
+
 
 async function drillDown(type) {
   const modal   = document.getElementById('drillModal');
