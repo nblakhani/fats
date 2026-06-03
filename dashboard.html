@@ -1186,19 +1186,86 @@ async function loadActions() {
   if (!data || !data.length) { el.innerHTML='<div class="empty">No action items found</div>'; return; }
 
   let html = `<table><thead><tr>
-    <th>Staff</th><th>Description</th><th>Help needed</th><th>Due date</th><th>Status</th>
+    <th>Staff</th><th>Client</th><th>Description</th><th>Help needed</th><th>Due date</th><th>Status</th><th></th>
   </tr></thead><tbody>`;
   data.forEach(a => {
     html += `<tr>
       <td>${a.staff_name||'—'}</td>
+      <td style="font-size:12px;color:var(--text2);">${a.client_name||'—'}</td>
       <td>${a.description}</td>
       <td style="color:var(--red)">${a.help_needed||'—'}</td>
       <td style="white-space:nowrap">${fmtDate(a.due_date)}</td>
       <td>${badge(a.status, a.status==='done'?'badge-green':a.status==='open'?'badge-amber':'badge-gray')}</td>
+      <td>
+        ${a.status !== 'done' ? `<button class="btn" style="font-size:11px;padding:3px 8px;" onclick="markActionDone('${a.id}')">✓ Done</button>` : ''}
+        ${a.status === 'done' ? `<button class="btn" style="font-size:11px;padding:3px 8px;color:var(--text3);" onclick="markActionOpen('${a.id}')">Reopen</button>` : ''}
+      </td>
     </tr>`;
   });
   html += '</tbody></table>';
   el.innerHTML = html;
+}
+
+function markActionDone(id) {
+  // Show inline resolution form
+  const btn = document.querySelector(`button[onclick="markActionDone('${id}')"]`);
+  const cell = btn ? btn.closest('td') : null;
+  if (!cell) return;
+
+  // Replace button with inline form
+  cell.innerHTML = `
+    <div style="min-width:180px;">
+      <textarea id="res-note-${id}" rows="2" placeholder="How was this resolved?" style="width:100%;font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;resize:none;margin-bottom:4px;"></textarea>
+      <div style="display:flex;gap:4px;">
+        <button class="btn btn-primary" style="font-size:11px;padding:3px 8px;flex:1;" onclick="confirmActionDone('${id}')">✓ Confirm</button>
+        <button class="btn" style="font-size:11px;padding:3px 8px;" onclick="loadActions()">✕</button>
+      </div>
+    </div>`;
+  document.getElementById('res-note-'+id).focus();
+}
+
+async function confirmActionDone(id) {
+  const note = (document.getElementById('res-note-'+id)||{value:''}).value.trim();
+  if (!note) { showFbToast('Please add a resolution note'); return; }
+
+  // 1. Mark action item done
+  const r = await fetch(API + '/action-items/' + id + '/', {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({status: 'done', resolved_at: new Date().toISOString(), help_needed: note})
+  });
+  if (!r.ok) { showFbToast('Failed to update'); return; }
+
+  const item = await r.json();
+
+  // 2. Send feedback to staff member notifying resolution
+  if (item.staff_id) {
+    await fetch(API + '/feedback/', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        visit_id:    item.visit_id,
+        staff_id:    item.staff_id,
+        from_id:     null,
+        ftype:       'resolved',
+        message:     '✅ Your help request has been resolved.
+
+Action: ' + (item.description||'') + '
+
+Resolution: ' + note
+      })
+    });
+  }
+
+  showFbToast('Marked done — staff notified');
+  loadActions();
+}
+
+async function markActionOpen(id) {
+  const r = await fetch(API + '/action-items/' + id + '/', {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({status: 'open', resolved_at: null})
+  });
+  if (r.ok) { showFbToast('Action item reopened'); loadActions(); }
+  else showFbToast('Failed to update');
 }
 
 // ── STAFF ─────────────────────────────────────

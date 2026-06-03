@@ -13,7 +13,7 @@ def send_feedback():
     """
     data = request.get_json(force=True)
 
-    required = ["visit_id", "staff_id", "from_id", "ftype"]
+    required = ["staff_id", "ftype"]
     for f in required:
         if not data.get(f):
             return jsonify({"error": f"{f} is required"}), 400
