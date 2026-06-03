@@ -26,6 +26,19 @@ def list_visits():
     date_str   = request.args.get("date")
     from_str   = request.args.get("from")
     to_str     = request.args.get("to")
+
+    # Clamp to_str to valid date (e.g. June 31 → June 30)
+    if to_str:
+        try:
+            from datetime import datetime, date
+            parts = to_str.split('-')
+            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+            import calendar
+            last_day = calendar.monthrange(y, m)[1]
+            if d > last_day:
+                to_str = f"{y}-{m:02d}-{last_day:02d}"
+        except Exception:
+            pass
     visit_type = request.args.get("visit_type")
     priority   = request.args.get("priority")
 

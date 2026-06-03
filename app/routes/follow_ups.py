@@ -14,6 +14,19 @@ def list_follow_ups():
     status   = request.args.get("status")
     from_str = request.args.get("from")
     to_str   = request.args.get("to")
+
+    # Clamp to_str to valid date
+    if to_str:
+        try:
+            from datetime import datetime
+            import calendar as cal
+            parts = to_str.split('-')
+            y, m, d = int(parts[0]), int(parts[1]), int(parts[2])
+            last_day = cal.monthrange(y, m)[1]
+            if d > last_day:
+                to_str = f"{y}-{m:02d}-{last_day:02d}"
+        except Exception:
+            pass
     overdue  = request.args.get("overdue")
 
     q = FollowUp.query
