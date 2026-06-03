@@ -18,13 +18,15 @@ def send_feedback():
         if not data.get(f):
             return jsonify({"error": f"{f} is required"}), 400
 
-    # Validate visit exists
-    visit = Visit.query.get(data["visit_id"])
-    if not visit:
-        return jsonify({"error": "visit not found"}), 404
+    # Validate visit if provided
+    visit_id = data.get("visit_id") or None
+    if visit_id:
+        visit = Visit.query.get(visit_id)
+        if not visit:
+            return jsonify({"error": "visit not found"}), 404
 
     fb = Feedback(
-        visit_id = data["visit_id"],
+        visit_id = visit_id,
         staff_id = data["staff_id"],
         from_id  = data["from_id"],
         ftype    = data["ftype"],
